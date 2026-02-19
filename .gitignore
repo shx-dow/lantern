@@ -19,8 +19,10 @@ ENV/
 Thumbs.db
 
 # Shared files (user data)
-shared_files/*
+shared_files/
 !shared_files/.gitkeep
 
 # Logs
 *.log
+
+extras/
