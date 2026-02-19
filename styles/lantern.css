@@ -1,0 +1,727 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   LANTERN TUI - Custom Stylesheet
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Dark Theme (Default) ─────────────────────────────────────────────────── */
+
+Screen {
+    background: #0a0e0a;
+}
+
+Header {
+    dock: top;
+    height: 3;
+    background: #0b0f0b;
+    color: #EBD5AB;
+    text-style: bold;
+    align: center middle;
+}
+
+Footer {
+    dock: bottom;
+    background: #0d110d;
+    color: #8a7e5e;
+}
+
+/* ── Main layout ── */
+
+#main-container {
+    height: 1fr;
+}
+
+/* ── Sidebar ── */
+
+#sidebar {
+    width: 40;
+    border: solid #1f2b1f;
+    background: #0d110d;
+    padding: 0 1;
+}
+
+#sidebar-title {
+    color: #EBD5AB;
+    text-style: bold;
+    padding: 1 0;
+    text-align: center;
+}
+
+#peer-list-container {
+    height: 1fr;
+    min-height: 5;
+}
+
+#peer-list {
+    height: 1fr;
+    background: transparent;
+    scrollbar-size: 1 1;
+}
+
+#peer-list > ListItem {
+    padding: 0 1;
+    height: 3;
+    background: transparent;
+}
+
+#peer-list > ListItem:hover {
+    background: #141a14;
+}
+
+#peer-list > ListItem.-highlighted {
+    background: #1a2e3e;
+}
+
+.peer-name {
+    color: #5ec4ff;
+    text-style: bold;
+}
+
+.peer-addr {
+    color: #718ca1;
+}
+
+.peer-dot {
+    color: #00ff9f;
+}
+
+/* ── My Files section (sidebar bottom) ── */
+
+#my-files-title {
+    text-align: center;
+    color: #EBD5AB;
+    text-style: bold;
+    padding: 1 0;
+    background: #0d110d;
+    margin-top: 1;
+}
+
+#my-files-table {
+    height: auto;
+    max-height: 12;
+    background: transparent;
+    margin: 0 0 1 0;
+    scrollbar-size: 1 1;
+}
+
+#my-files-table > .datatable--header {
+    background: #111511;
+    color: #EBD5AB;
+    text-style: bold;
+}
+
+#my-files-table > .datatable--cursor {
+    background: black;
+    color: #EBD5AB;
+}
+
+#my-files-table > .datatable--hover {
+    background: black;
+    color: #EBD5AB;
+}
+
+#my-files-table > .datatable--odd-row {
+    color: #EBD5AB;
+}
+
+#my-files-table > .datatable--even-row {
+    background: #0f130f;
+    color: #EBD5AB;
+}
+
+/* ── Main panel (remote files) ── */
+
+#main-panel {
+    background: #0d110d;
+    border: solid #1f2b1f;
+}
+
+#files-header {
+    dock: top;
+    height: auto;
+    padding: 1 2;
+    background: #0d110d;
+    border-bottom: heavy #1f2b1f;
+}
+
+#files-header-text {
+    color: #EBD5AB;
+    text-style: bold;
+}
+
+#remote-files-table {
+    height: 1fr;
+    background: transparent;
+    scrollbar-size: 1 1;
+}
+
+#remote-files-table > .datatable--header {
+    background: #111511;
+    color: #EBD5AB;
+    text-style: bold;
+}
+
+#remote-files-table > .datatable--cursor {
+    background: black;
+    color: #EBD5AB;
+}
+
+#remote-files-table > .datatable--hover {
+    background: black;
+    color: #EBD5AB;
+}
+
+#remote-files-table > .datatable--odd-row {
+    color: #EBD5AB;
+}
+
+#remote-files-table > .datatable--even-row {
+    background: #0f130f;
+    color: #EBD5AB;
+}
+
+#no-peer-label {
+    width: 100%;
+    height: 100%;
+    content-align: center middle;
+    text-align: center;
+    color: #41505e;
+    text-style: italic;
+}
+
+/* ── Action bar ── */
+
+#action-bar {
+    dock: bottom;
+    height: auto;
+    align: center middle;
+}
+
+#action-bar Button {
+    margin: 0 1;
+    min-width: 14;
+    height: 3;
+    background: #1a201a;
+    color: #EBD5AB;
+    text-style: bold;
+    border-top: tall #2a3a2a;
+    border-bottom: tall #0a0e0a;
+}
+
+#action-bar Button:hover {
+    background: black;
+    color: #EBD5AB;
+    border-top: tall grey;
+}
+
+#action-bar Button:focus {
+    background: black;
+    color: #EBD5AB;
+}
+
+/* ── Log panel ── */
+
+#log-panel {
+    height: 12;
+    border: solid #1f2b1f;
+    background: #0d110d;
+}
+
+#log-title {
+    dock: top;
+    height: auto;
+    padding: 1 0;
+    color: #EBD5AB;
+    text-style: bold;
+}
+
+#log-view {
+    height: 1fr;
+    padding: 0 1;
+    background: transparent;
+    scrollbar-size: 1 1;
+    scrollbar-color: #EBD5AB;
+    scrollbar-color-hover: #EBD5AB;
+    scrollbar-color-active: #EBD5AB;
+}
+
+/* ── Command bar ── */
+
+#command-bar {
+    height: auto;
+    background: #0d110d;
+    border: solid #1f2b1f;
+}
+
+#command-input {
+    width: 1fr;
+    background: #0d110d;
+    color: #EBD5AB;
+    border: tall #0d110d;
+}
+
+#command-input:focus {
+    background: #111511;
+    border: tall #111511;
+}
+
+/* ── Help modal ── */
+
+#help-dialog {
+    width: 70;
+    max-width: 80%;
+    height: auto;
+    max-height: 80%;
+    background: #0d110d;
+    border: solid #1f2b1f;
+    padding: 1 2;
+    margin: 2 4;
+}
+
+#help-title {
+    color: #EBD5AB;
+    text-style: bold;
+    text-align: center;
+    padding: 1 0;
+    border-bottom: heavy #1f2b1f;
+    margin-bottom: 1;
+}
+
+#help-content {
+    color: #c8c0a8;
+    padding: 1 1;
+    height: auto;
+}
+
+#help-close-btn {
+    margin-top: 1;
+    width: 100%;
+    background: #1a201a;
+    color: #EBD5AB;
+    text-style: bold;
+    border-top: tall #2a3a2a;
+    border-bottom: tall #0a0e0a;
+}
+
+#help-close-btn:hover {
+    background: #1a2e3e;
+    color: #5ec4ff;
+}
+
+HelpScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.75);
+}
+
+/* ── Upload modal ── */
+
+#upload-dialog {
+    width: 60;
+    max-width: 75%;
+    height: auto;
+    background: #0d110d;
+    border: solid #1f2b1f;
+    padding: 1 2;
+    margin: 2 4;
+}
+
+#upload-title {
+    color: #EBD5AB;
+    text-style: bold;
+    text-align: center;
+    padding: 1 0;
+    border-bottom: heavy #1f2b1f;
+    margin-bottom: 1;
+}
+
+#upload-input {
+    width: 100%;
+    background: #0a0e0a;
+    color: #EBD5AB;
+    border: tall #1f2b1f;
+    margin-bottom: 1;
+}
+
+#upload-input:focus {
+    border: tall #1f2b1f;
+}
+
+#upload-btn-bar {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+#upload-btn-bar Button {
+    margin: 0 1;
+    min-width: 16;
+    height: 3;
+    text-style: bold;
+}
+
+#upload-confirm {
+    background: #1a201a;
+    color: #EBD5AB;
+    border-top: tall #2a3a2a;
+    border-bottom: tall #0a0e0a;
+}
+
+#upload-confirm:hover {
+    background: black;
+    color: #EBD5AB;
+    border-top: tall grey;
+}
+
+#upload-cancel {
+    background: #1a201a;
+    color: #EBD5AB;
+    border-top: tall #2a3a2a;
+    border-bottom: tall #0a0e0a;
+}
+
+#upload-cancel:hover {
+    background: black;
+    color: #EBD5AB;
+    border-top: tall grey;
+}
+
+UploadScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.75);
+}
+
+/* ── Loading screen ── */
+
+LoadingScreen {
+    align: center middle;
+    background: #0a0e0a;
+}
+
+#loading-logo {
+    color: #EBD5AB;
+    text-style: bold;
+    text-align: center;
+    content-align: center middle;
+}
+
+/* ── Progress bar ── */
+
+#progress-bar {
+    width: 1fr;
+    height: 1;
+    background: #1a201a;
+    color: #5ec4ff;
+}
+
+#progress-bar > .bar--bar {
+    color: #5ec4ff;
+    background: #2a4030;
+}
+
+#progress-bar > .bar--complete {
+    color: #00ff9f;
+}
+
+#transfer-status {
+    color: #718ca1;
+    text-align: center;
+    height: 1;
+}
+
+/* ── Notification toast ── */
+
+#notification-toast {
+    dock: top;
+    height: auto;
+    padding: 1 2;
+    margin: 1 4;
+    background: #1a2e3e;
+    color: #EBD5AB;
+    text-style: bold;
+    border: solid #2a4e5e;
+    opacity: 0;
+    transition: opacity 0.3;
+}
+
+#notification-toast.visible {
+    opacity: 1;
+}
+
+#notification-toast.success {
+    background: #1a3e2a;
+    border: solid #2a5e3e;
+}
+
+#notification-toast.error {
+    background: #3e1a1a;
+    border: solid #5e2a2a;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT THEME
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.app-light Screen {
+    background: #f5f5f0;
+}
+
+.app-light Header {
+    background: #e8e8e0;
+    color: #4a4035;
+    text-style: bold;
+}
+
+.app-light Footer {
+    background: #e0e0d8;
+    color: #7a7a6a;
+}
+
+.app-light #sidebar {
+    border: solid #c8c8c0;
+    background: #e8e8e0;
+}
+
+.app-light #sidebar-title {
+    color: #4a4035;
+}
+
+.app-light #peer-list > ListItem:hover {
+    background: #d8d8d0;
+}
+
+.app-light #peer-list > ListItem.-highlighted {
+    background: #c8e0f0;
+}
+
+.app-light .peer-name {
+    color: #1a6a9a;
+}
+
+.app-light .peer-addr {
+    color: #5a6070;
+}
+
+.app-light .peer-dot {
+    color: #1a9a5a;
+}
+
+.app-light #my-files-title {
+    color: #4a4035;
+    background: #e8e8e0;
+}
+
+.app-light #my-files-table > .datatable--header {
+    background: #d8d8d0;
+    color: #4a4035;
+}
+
+.app-light #my-files-table > .datatable--cursor {
+    background: #c8c8c0;
+    color: #4a4035;
+}
+
+.app-light #my-files-table > .datatable--hover {
+    background: #d0d0c8;
+    color: #4a4035;
+}
+
+.app-light #my-files-table > .datatable--odd-row {
+    color: #4a4035;
+}
+
+.app-light #my-files-table > .datatable--even-row {
+    background: #e8e8e0;
+    color: #4a4035;
+}
+
+.app-light #main-panel {
+    background: #e8e8e0;
+    border: solid #c8c8c0;
+}
+
+.app-light #files-header {
+    background: #e8e8e0;
+    border-bottom: heavy #c8c8c0;
+}
+
+.app-light #files-header-text {
+    color: #4a4035;
+}
+
+.app-light #remote-files-table > .datatable--header {
+    background: #d8d8d0;
+    color: #4a4035;
+}
+
+.app-light #remote-files-table > .datatable--cursor {
+    background: #c8c8c0;
+    color: #4a4035;
+}
+
+.app-light #remote-files-table > .datatable--hover {
+    background: #d0d0c8;
+    color: #4a4035;
+}
+
+.app-light #remote-files-table > .datatable--odd-row {
+    color: #4a4035;
+}
+
+.app-light #remote-files-table > .datatable--even-row {
+    background: #e8e8e0;
+    color: #4a4035;
+}
+
+.app-light #action-bar Button {
+    background: #d8d8d0;
+    color: #4a4035;
+    border-top: tall #e8e8e0;
+    border-bottom: tall #c8c8c0;
+}
+
+.app-light #action-bar Button:hover {
+    background: #c8c8c0;
+    color: #4a4035;
+    border-top: tall #b8b8b0;
+}
+
+.app-light #log-panel {
+    border: solid #c8c8c0;
+    background: #e8e8e0;
+}
+
+.app-light #log-title {
+    color: #4a4035;
+}
+
+.app-light #log-view {
+    scrollbar-color: #4a4035;
+    scrollbar-color-hover: #4a4035;
+    scrollbar-color-active: #4a4035;
+}
+
+.app-light #command-bar {
+    background: #e8e8e0;
+    border: solid #c8c8c0;
+}
+
+.app-light #command-input {
+    background: #f0f0e8;
+    color: #4a4035;
+    border: tall #d8d8d0;
+}
+
+.app-light #command-input:focus {
+    background: #f8f8f0;
+    border: tall #c8c8c0;
+}
+
+.app-light #help-dialog {
+    background: #e8e8e0;
+    border: solid #c8c8c0;
+}
+
+.app-light #help-title {
+    color: #4a4035;
+    border-bottom: heavy #c8c8c0;
+}
+
+.app-light #help-content {
+    color: #5a5a4a;
+}
+
+.app-light #help-close-btn {
+    background: #d8d8d0;
+    color: #4a4035;
+    border-top: tall #e8e8e0;
+    border-bottom: tall #c8c8c0;
+}
+
+.app-light #help-close-btn:hover {
+    background: #c8e0f0;
+    color: #1a6a9a;
+}
+
+.app-light HelpScreen {
+    background: rgba(200, 200, 200, 0.75);
+}
+
+.app-light #upload-dialog {
+    background: #e8e8e0;
+    border: solid #c8c8c0;
+}
+
+.app-light #upload-title {
+    color: #4a4035;
+    border-bottom: heavy #c8c8c0;
+}
+
+.app-light #upload-input {
+    background: #f0f0e8;
+    color: #4a4035;
+    border: tall #c8c8c0;
+}
+
+.app-light #upload-confirm {
+    background: #d8d8d0;
+    color: #4a4035;
+}
+
+.app-light #upload-confirm:hover {
+    background: #c8c8c0;
+    color: #4a4035;
+}
+
+.app-light #upload-cancel {
+    background: #d8d8d0;
+    color: #4a4035;
+}
+
+.app-light #upload-cancel:hover {
+    background: #c8c8c0;
+    color: #4a4035;
+}
+
+.app-light UploadScreen {
+    background: rgba(200, 200, 200, 0.75);
+}
+
+.app-light LoadingScreen {
+    background: #f5f5f0;
+}
+
+.app-light #loading-logo {
+    color: #4a4035;
+}
+
+.app-light #progress-bar {
+    background: #d8d8d0;
+    color: #1a6a9a;
+}
+
+.app-light #progress-bar > .bar--bar {
+    color: #1a6a9a;
+    background: #b8d8c0;
+}
+
+.app-light #progress-bar > .bar--complete {
+    color: #1a9a5a;
+}
+
+.app-light #transfer-status {
+    color: #5a6070;
+}
+
+.app-light #notification-toast {
+    background: #c8e0f0;
+    color: #4a4035;
+    border: solid #a8c0d0;
+}
+
+.app-light #notification-toast.success {
+    background: #c8f0d8;
+    border: solid #a8d0b8;
+}
+
+.app-light #notification-toast.error {
+    background: #f0c8c8;
+    border: solid #d0a8a8;
+}
