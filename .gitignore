@@ -26,3 +26,8 @@ shared_files/
 *.log
 
 extras/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/

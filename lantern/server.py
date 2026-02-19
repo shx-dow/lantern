@@ -9,8 +9,8 @@ import os
 import socket
 import threading
 
-from config import TCP_PORT, SHARED_DIR, SEPARATOR, BUFFER_SIZE
-from protocol import send_msg, recv_msg, send_file, recv_file
+from .config import TCP_PORT, SHARED_DIR, SEPARATOR, BUFFER_SIZE
+from .protocol import send_msg, recv_msg, send_file, recv_file
 
 
 def _safe_filename(filename: str) -> str:

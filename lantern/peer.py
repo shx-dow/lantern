@@ -14,10 +14,10 @@ import argparse
 import os
 import sys
 
-from config import TCP_PORT, SHARED_DIR, PEER_ID
-from discovery import PeerDiscovery
-from server import FileServer
-from client import list_files, download_file, upload_file, delete_file
+from .config import TCP_PORT, SHARED_DIR, PEER_ID
+from .discovery import PeerDiscovery
+from .server import FileServer
+from .client import list_files, download_file, upload_file, delete_file
 
 
 def _format_size(size_bytes: int) -> str:

@@ -13,8 +13,8 @@ Two API layers:
 import os
 import socket
 
-from config import SEPARATOR, BUFFER_SIZE, SHARED_DIR
-from protocol import send_msg, recv_msg, recv_file
+from .config import SEPARATOR, BUFFER_SIZE, SHARED_DIR
+from .protocol import send_msg, recv_msg, recv_file
 
 
 def _connect(host: str, port: int) -> socket.socket:

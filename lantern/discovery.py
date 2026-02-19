@@ -14,7 +14,7 @@ import threading
 import time
 import platform
 
-from config import UDP_PORT, TCP_PORT, BROADCAST_INTERVAL, PEER_TIMEOUT, PEER_ID
+from .config import UDP_PORT, TCP_PORT, BROADCAST_INTERVAL, PEER_TIMEOUT, PEER_ID
 
 try:
     import psutil

@@ -10,7 +10,7 @@ knows exactly how many bytes to read for each message.
 import struct
 import os
 
-from config import BUFFER_SIZE
+from .config import BUFFER_SIZE
 
 
 # ---------------------------------------------------------------------------

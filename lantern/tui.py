@@ -33,10 +33,10 @@ from textual.screen import ModalScreen, Screen
 from textual.reactive import reactive
 from textual.timer import Timer
 
-from config import TCP_PORT, SHARED_DIR, PEER_ID
-from discovery import PeerDiscovery
-from server import FileServer
-from client import (
+from .config import TCP_PORT, SHARED_DIR, PEER_ID
+from .discovery import PeerDiscovery
+from .server import FileServer
+from .client import (
     fetch_file_list,
     do_download,
     do_upload,
