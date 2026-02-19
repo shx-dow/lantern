@@ -1,0 +1,8 @@
+# Lantern P2P File Sharing - Dependencies
+# Install with: pip install -r requirements.txt
+
+# TUI framework - Required for the graphical terminal interface
+textual>=0.50.0
+
+# System utilities - Optional but recommended for better network interface detection
+psutil>=5.9.0
