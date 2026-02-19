@@ -34,9 +34,15 @@ pip install -e .
 
 ## Usage
 
-### TUI Mode (Recommended)
+### TUI Mode (Default)
 
-Launch the terminal dashboard:
+Launch the terminal dashboard (beautiful visual interface):
+
+```bash
+lantern
+```
+
+Or explicitly:
 
 ```bash
 lantern --tui
@@ -44,13 +50,13 @@ lantern --tui
 
 ### CLI Mode
 
-Use command-line interface:
+Use command-line interface (text-based commands):
 
 ```bash
-lantern
+lantern --cli
 ```
 
-Available commands:
+Available CLI commands:
 - `peers` - Show discovered peers
 - `list <host[:port]>` - List files on remote peer
 - `download <host[:port]> <file>` - Download a file
@@ -63,7 +69,7 @@ Available commands:
 ### Custom Port
 
 ```bash
-lantern --port 6000 --tui
+lantern --port 6000
 ```
 
 ## Key Bindings (TUI Mode)

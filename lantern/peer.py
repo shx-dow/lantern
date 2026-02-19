@@ -5,8 +5,8 @@ Main entry point.  Starts the discovery beacon, TCP file server, and
 either a CLI loop or a full TUI dashboard.
 
 Usage:
-    python peer.py              # start CLI mode (default)
-    python peer.py --tui        # start TUI dashboard
+    python peer.py              # start TUI mode (default)
+    python peer.py --cli        # start CLI mode
     python peer.py --port 6000  # use a custom TCP port
 """
 
@@ -73,7 +73,7 @@ def _list_local_files() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Lantern P2P File Sharing")
     parser.add_argument("--port", type=int, default=TCP_PORT, help="TCP port to listen on")
-    parser.add_argument("--tui", action="store_true", help="Launch the TUI dashboard instead of CLI")
+    parser.add_argument("--cli", action="store_true", help="Launch CLI mode instead of TUI dashboard")
     args = parser.parse_args()
 
     tcp_port = args.port
@@ -89,20 +89,20 @@ def main() -> None:
     server = FileServer(port=tcp_port)
     server.start()
 
-    # ── TUI mode ──
-    if args.tui:
-        from tui import run_tui
+    # ── CLI mode ──
+    if args.cli:
+        print(f"  Lantern started  [peer_id={PEER_ID}  tcp_port={tcp_port}]")
+        print(f"  Shared directory: {SHARED_DIR}")
+        print("  Type 'help' for available commands.\n")
+    else:
+        # ── TUI mode (default) ──
+        from .tui import run_tui
         try:
             run_tui(discovery, server, tcp_port)
         finally:
             discovery.stop()
             server.stop()
         return
-
-    # ── CLI mode ──
-    print(f"  Lantern started  [peer_id={PEER_ID}  tcp_port={tcp_port}]")
-    print(f"  Shared directory: {SHARED_DIR}")
-    print("  Type 'help' for available commands.\n")
 
     # CLI loop
     try:
