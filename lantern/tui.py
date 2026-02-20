@@ -7,15 +7,13 @@ Built with Textual.  Launched via `python peer.py --tui`.
 from __future__ import annotations
 
 import os
-import time
 import threading
 from datetime import datetime
-from pathlib import Path
 
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical, Container, Center
+from textual.containers import Horizontal, Vertical, Container
 from textual.widgets import (
     Header,
     Footer,
@@ -31,7 +29,6 @@ from textual.widgets import (
 )
 from textual.screen import ModalScreen, Screen
 from textual.reactive import reactive
-from textual.timer import Timer
 
 from .config import TCP_PORT, SHARED_DIR, PEER_ID
 from .discovery import PeerDiscovery
@@ -56,35 +53,79 @@ CSS_FILE = os.path.join(os.path.dirname(__file__), "styles", "lantern.css")
 class TransferProgressScreen(ModalScreen):
     """Modal showing transfer progress with progress bar."""
 
-    def __init__(self, operation: str, filename: str, total_size: int):
+    BINDINGS = [Binding("escape", "close", "Close")]
+
+    def __init__(
+        self, operation: str, filename: str, total_size: int, cancel_event: threading.Event = None
+    ):
         super().__init__()
-        self.operation = operation  # "Upload" or "Download"
+        self.operation = operation
         self.filename = filename
         self.total_size = total_size
         self.current_size = 0
-        self._update_timer: Timer | None = None
+        self.cancel_event = cancel_event
+        self._completed = False
 
     def compose(self) -> ComposeResult:
         with Container(id="upload-dialog"):
             yield Label(f"{self.operation}: {self.filename}", id="upload-title")
             yield Label(f"0 / {format_size(self.total_size)}", id="transfer-status")
             yield ProgressBar(total=self.total_size, id="progress-bar")
-            yield Button("Cancel", variant="error", id="upload-cancel")
+            yield Button("Cancel", variant="error", id="btn-cancel")
+
+    def on_mount(self) -> None:
+        pass
 
     def update_progress(self, current: int) -> None:
         """Update the progress bar and status."""
-        self.current_size = current
-        progress_bar = self.query_one("#progress-bar", ProgressBar)
-        status_label = self.query_one("#transfer-status", Label)
-        
-        progress_bar.advance(current - progress_bar.progress)
-        status_label.update(f"{format_size(current)} / {format_size(self.total_size)}")
-        
-        if current >= self.total_size:
-            self.dismiss(True)
+        if not self.is_mounted or self._completed:
+            return
+        try:
+            self.current_size = current
+            progress_bar = self.query_one("#progress-bar", ProgressBar)
+            status_label = self.query_one("#transfer-status", Label)
+
+            progress_bar.advance(current - progress_bar.progress)
+            percent = (current / self.total_size * 100) if self.total_size > 0 else 100
+            status_label.update(
+                f"{format_size(current)} / {format_size(self.total_size)} ({percent:.1f}%)"
+            )
+        except Exception:
+            pass
+
+    def mark_complete(self, success: bool, message: str = None) -> None:
+        """Mark transfer as complete and update UI."""
+        self._completed = True
+        try:
+            cancel_btn = self.query_one("#btn-cancel", Button)
+            if success:
+                cancel_btn.label = "Close"
+                cancel_btn.variant = "success"
+                cancel_btn.id = "btn-close"
+                if message:
+                    status_label = self.query_one("#transfer-status", Label)
+                    status_label.update(message)
+            else:
+                cancel_btn.label = "Close"
+                cancel_btn.variant = "warning"
+                cancel_btn.id = "btn-close"
+        except Exception:
+            pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "upload-cancel":
+        btn_id = event.button.id
+        if btn_id == "btn-cancel":
+            if self.cancel_event:
+                self.cancel_event.set()
+            self.dismiss(False)
+        elif btn_id == "btn-close":
+            self.dismiss(True)
+
+    def action_close(self) -> None:
+        if self._completed:
+            self.dismiss(True)
+        elif self.cancel_event:
+            self.cancel_event.set()
             self.dismiss(False)
 
 
@@ -256,6 +297,7 @@ class LanternApp(App):
     # -- reactive state --
     selected_peer: reactive[dict | None] = reactive(None)
     dark_theme: reactive[bool] = reactive(True)
+    remote_files: reactive[list[dict]] = reactive([])
 
     def __init__(
         self,
@@ -268,7 +310,6 @@ class LanternApp(App):
         self.file_server = file_server
         self.tcp_port = tcp_port
         self.theme = "textual-dark"
-        self._transfer_progress: TransferProgressScreen | None = None
 
     # --------------------------------------------------------------------------
     # Layout
@@ -458,6 +499,7 @@ class LanternApp(App):
             )
 
     def _update_remote_table(self, files: list[dict]) -> None:
+        self.remote_files = files
         table = self.query_one("#remote-files-table", DataTable)
         table.clear()
         for f in files:
@@ -516,28 +558,31 @@ class LanternApp(App):
             f"Uploading [bold]{os.path.basename(filepath)}[/] to "
             f"[#5ec4ff]{peer['hostname']}[/]...",
         )
-        
-        # Show progress bar for files > 1MB
+
+        progress_screen = None
         filesize = os.path.getsize(filepath)
         if filesize > 1024 * 1024:
+            cancel_event = threading.Event()
+
             def show_progress():
-                self._transfer_progress = TransferProgressScreen(
-                    "Upload", os.path.basename(filepath), filesize
+                nonlocal progress_screen
+                progress_screen = TransferProgressScreen(
+                    "Upload", os.path.basename(filepath), filesize, cancel_event
                 )
-                self.push_screen(self._transfer_progress)
+                self.push_screen(progress_screen)
+
             self.app.call_from_thread(show_progress)
-        
+
         try:
             msg = do_upload(peer["ip"], peer["tcp_port"], filepath)
-            
-            # Close progress bar if shown
-            if self._transfer_progress:
-                def close_progress():
-                    if self._transfer_progress:
-                        self._transfer_progress.update_progress(filesize)
-                        self._transfer_progress = None
-                self.app.call_from_thread(close_progress)
-            
+
+            if progress_screen:
+                self.app.call_from_thread(
+                    progress_screen.mark_complete,
+                    True,
+                    f"Complete: {format_size(filesize)}",
+                )
+
             self.app.call_from_thread(
                 self._log,
                 f"[#00ff9f]Success:[/] {msg}",
@@ -545,12 +590,13 @@ class LanternApp(App):
             self.app.call_from_thread(
                 self.show_notification,
                 f"Uploaded {os.path.basename(filepath)}",
-                "success"
+                "success",
             )
             self.app.call_from_thread(self._refresh_my_files)
             self._refresh_remote_files()
         except Exception as e:
-            self._transfer_progress = None
+            if progress_screen:
+                self.app.call_from_thread(progress_screen.mark_complete, False, str(e))
             self.app.call_from_thread(
                 self._log,
                 f"[#e74c3c]Upload failed:[/] {e}",
@@ -558,7 +604,7 @@ class LanternApp(App):
             self.app.call_from_thread(
                 self.show_notification,
                 f"Upload failed: {e}",
-                "error"
+                "error",
             )
 
     def action_download_file(self) -> None:
@@ -579,19 +625,56 @@ class LanternApp(App):
             self._log("[#e0c97f]Warning:[/] Select a file in the table first.")
             return
 
+        filesize = None
+        for f in self.remote_files:
+            if f["name"] == filename:
+                filesize = f["size"]
+                break
+
         peer = self.selected_peer
-        self._do_download_async(peer, filename)
+        self._do_download_async(peer, filename, filesize)
 
     @work(thread=True)
-    def _do_download_async(self, peer: dict, filename: str) -> None:
+    def _do_download_async(self, peer: dict, filename: str, filesize: int = None) -> None:
         self.app.call_from_thread(
             self._log,
             f"Downloading [bold]{filename}[/] from "
             f"[#5ec4ff]{peer['hostname']}[/]...",
         )
-        
+
+        progress_screen = None
+        cancel_event = None
+
+        if filesize and filesize > 1024 * 1024:
+            cancel_event = threading.Event()
+
+            def show_progress():
+                nonlocal progress_screen
+                progress_screen = TransferProgressScreen(
+                    "Download", filename, filesize, cancel_event
+                )
+                self.push_screen(progress_screen)
+
+            self.app.call_from_thread(show_progress)
+
+        def progress_callback(current: int, total: int):
+            if progress_screen:
+                self.app.call_from_thread(progress_screen.update_progress, current)
+
         try:
-            dest, received = do_download(peer["ip"], peer["tcp_port"], filename)
+            dest, received = do_download(
+                peer["ip"],
+                peer["tcp_port"],
+                filename,
+                progress_callback,
+                cancel_event,
+            )
+            if progress_screen:
+                self.app.call_from_thread(
+                    progress_screen.mark_complete,
+                    True,
+                    f"Complete: {format_size(received)}",
+                )
             self.app.call_from_thread(
                 self._log,
                 f"[#00ff9f]Downloaded[/] {filename} "
@@ -600,10 +683,12 @@ class LanternApp(App):
             self.app.call_from_thread(
                 self.show_notification,
                 f"Downloaded {filename}",
-                "success"
+                "success",
             )
             self.app.call_from_thread(self._refresh_my_files)
         except Exception as e:
+            if progress_screen:
+                self.app.call_from_thread(progress_screen.mark_complete, False, str(e))
             self.app.call_from_thread(
                 self._log,
                 f"[#e74c3c]Download failed:[/] {e}",
@@ -611,7 +696,7 @@ class LanternApp(App):
             self.app.call_from_thread(
                 self.show_notification,
                 f"Download failed: {e}",
-                "error"
+                "error",
             )
 
     def action_delete_file(self) -> None:

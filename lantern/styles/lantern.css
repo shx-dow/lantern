@@ -54,6 +54,9 @@ Footer {
     height: 1fr;
     background: transparent;
     scrollbar-size: 1 1;
+    scrollbar-color: #EBD5AB;
+    scrollbar-color-hover: #EBD5AB;
+    scrollbar-color-active: #EBD5AB;
 }
 
 #peer-list > ListItem {
@@ -100,6 +103,9 @@ Footer {
     background: transparent;
     margin: 0 0 1 0;
     scrollbar-size: 1 1;
+    scrollbar-color: #EBD5AB;
+    scrollbar-color-hover: #EBD5AB;
+    scrollbar-color-active: #EBD5AB;
 }
 
 #my-files-table > .datatable--header {
@@ -151,6 +157,9 @@ Footer {
     height: 1fr;
     background: transparent;
     scrollbar-size: 1 1;
+    scrollbar-color: #EBD5AB;
+    scrollbar-color-hover: #EBD5AB;
+    scrollbar-color-active: #EBD5AB;
 }
 
 #remote-files-table > .datatable--header {
@@ -388,6 +397,39 @@ UploadScreen {
     background: rgba(0, 0, 0, 0.75);
 }
 
+/* ── Transfer Progress modal ── */
+
+TransferProgressScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.75);
+}
+
+#btn-cancel, #btn-close {
+    margin-top: 1;
+    width: 100%;
+    background: #3e1a1a;
+    color: #EBD5AB;
+    text-style: bold;
+    border-top: tall #5e2a2a;
+    border-bottom: tall #2a0a0a;
+}
+
+#btn-cancel:hover {
+    background: #5e2a2a;
+    color: #EBD5AB;
+}
+
+#btn-close {
+    background: #1a3e2a;
+    border-top: tall #2a5e3e;
+    border-bottom: tall #0a2a1a;
+}
+
+#btn-close:hover {
+    background: #2a5e3e;
+    color: #EBD5AB;
+}
+
 /* ── Loading screen ── */
 
 LoadingScreen {
@@ -491,6 +533,12 @@ LoadingScreen {
     background: #c8e0f0;
 }
 
+.app-light #peer-list {
+    scrollbar-color: #4a4035;
+    scrollbar-color-hover: #4a4035;
+    scrollbar-color-active: #4a4035;
+}
+
 .app-light .peer-name {
     color: #1a6a9a;
 }
@@ -532,6 +580,12 @@ LoadingScreen {
     color: #4a4035;
 }
 
+.app-light #my-files-table {
+    scrollbar-color: #4a4035;
+    scrollbar-color-hover: #4a4035;
+    scrollbar-color-active: #4a4035;
+}
+
 .app-light #main-panel {
     background: #e8e8e0;
     border: solid #c8c8c0;
@@ -568,6 +622,12 @@ LoadingScreen {
 .app-light #remote-files-table > .datatable--even-row {
     background: #e8e8e0;
     color: #4a4035;
+}
+
+.app-light #remote-files-table {
+    scrollbar-color: #4a4035;
+    scrollbar-color-hover: #4a4035;
+    scrollbar-color-active: #4a4035;
 }
 
 .app-light #action-bar Button {
@@ -682,6 +742,33 @@ LoadingScreen {
 
 .app-light UploadScreen {
     background: rgba(200, 200, 200, 0.75);
+}
+
+.app-light TransferProgressScreen {
+    background: rgba(200, 200, 200, 0.75);
+}
+
+.app-light #btn-cancel {
+    background: #e8c8c8;
+    color: #4a4035;
+    border-top: tall #d0a8a8;
+    border-bottom: tall #f0d8d8;
+}
+
+.app-light #btn-cancel:hover {
+    background: #d0a8a8;
+    color: #4a4035;
+}
+
+.app-light #btn-close {
+    background: #c8e8c8;
+    border-top: tall #a8d0a8;
+    border-bottom: tall #d8f0d8;
+}
+
+.app-light #btn-close:hover {
+    background: #a8d0a8;
+    color: #4a4035;
 }
 
 .app-light LoadingScreen {
