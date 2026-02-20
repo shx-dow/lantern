@@ -4,6 +4,7 @@ Configuration constants for the P2P file sharing system.
 
 import os
 import uuid
+from datetime import datetime
 
 # --- Networking ---
 TCP_PORT = 5000              # Default TCP port for file operations
@@ -16,7 +17,9 @@ PEER_TIMEOUT = 15            # Seconds before a peer is considered offline
 SEPARATOR = "<SEP>"          # Delimiter used in protocol messages
 
 # --- File Storage ---
-SHARED_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shared_files")
+DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
+TIMESTAMP = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+SHARED_DIR = os.path.join(DOWNLOADS_DIR, f"Lantern_{TIMESTAMP}")
 
 # --- Identity ---
 # Each peer gets a unique ID at startup so it can ignore its own broadcasts
