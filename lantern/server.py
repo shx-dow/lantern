@@ -126,7 +126,8 @@ class FileServer:
             send_msg(conn, f"ERROR{SEPARATOR}File not found: {filename}")
             return
 
-        send_msg(conn, "OK")
+        filesize = os.path.getsize(filepath)
+        send_msg(conn, f"OK{SEPARATOR}{filesize}")
         send_file(conn, filepath)
 
     def _handle_upload(self, conn: socket.socket, filename: str, filesize_str: str) -> None:

@@ -12,15 +12,16 @@ Two API layers:
 
 import os
 import socket
+import threading
 
 from .config import SEPARATOR, BUFFER_SIZE, SHARED_DIR
 from .protocol import send_msg, recv_msg, recv_file
 
 
-def _connect(host: str, port: int) -> socket.socket:
+def _connect(host: str, port: int, timeout: float = 10) -> socket.socket:
     """Open a TCP connection to a remote peer."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(10)
+    sock.settimeout(timeout)
     sock.connect((host, port))
     return sock
 
@@ -70,14 +71,22 @@ def fetch_file_list(host: str, port: int) -> list[dict]:
         sock.close()
 
 
-def do_download(host: str, port: int, filename: str) -> tuple[str, int]:
+def do_download(
+    host: str,
+    port: int,
+    filename: str,
+    progress_callback: callable = None,
+    cancel_event: threading.Event = None,
+) -> tuple[str, int]:
     """
     Download a file from a remote peer.
 
     Returns (destination_path, bytes_received).
     Raises RuntimeError on failure.
+    progress_callback: optional callable(current_bytes, total_bytes) for UI updates
+    cancel_event: optional threading.Event to cancel the transfer
     """
-    sock = _connect(host, port)
+    sock = _connect(host, port, timeout=30)
     try:
         send_msg(sock, f"DOWNLOAD{SEPARATOR}{filename}")
         response = recv_msg(sock)
@@ -88,9 +97,22 @@ def do_download(host: str, port: int, filename: str) -> tuple[str, int]:
             parts = response.split(SEPARATOR, 1)
             raise RuntimeError(parts[1] if len(parts) > 1 else "Unknown error")
 
+        parts = response.split(SEPARATOR, 1)
+        if parts[0] != "OK" or len(parts) < 2:
+            raise RuntimeError("Invalid response from peer")
+
+        try:
+            filesize = int(parts[1])
+        except ValueError:
+            raise RuntimeError(f"Invalid file size in response: {parts[1]}")
+
         os.makedirs(SHARED_DIR, exist_ok=True)
         dest = os.path.join(SHARED_DIR, filename)
-        received = recv_file(sock, dest)
+        received = recv_file(sock, dest, filesize, progress_callback, cancel_event)
+
+        if cancel_event and cancel_event.is_set():
+            raise RuntimeError("Transfer cancelled")
+
         return dest, received
     finally:
         sock.close()

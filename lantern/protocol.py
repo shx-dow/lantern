@@ -9,6 +9,7 @@ knows exactly how many bytes to read for each message.
 
 import struct
 import os
+import threading
 
 from .config import BUFFER_SIZE
 
@@ -53,27 +54,33 @@ def send_file(sock, filepath: str) -> None:
             sock.sendall(chunk)
 
 
-def recv_file(sock, filepath: str) -> int:
+def recv_file(
+    sock,
+    filepath: str,
+    filesize: int,
+    progress_callback: callable = None,
+    cancel_event: threading.Event = None,
+) -> int:
     """
-    Receive a file: read the size message first, then read that many raw bytes
-    and write them to *filepath*.
+    Receive a file: read filesize raw bytes and write them to *filepath*.
 
     Returns the number of bytes received.
+    progress_callback: optional callable(current_bytes, total_bytes)
+    cancel_event: optional threading.Event to cancel the transfer
     """
-    size_msg = recv_msg(sock)
-    if size_msg is None:
-        return 0
-    filesize = int(size_msg)
-
     received = 0
     with open(filepath, "wb") as f:
         while received < filesize:
+            if cancel_event and cancel_event.is_set():
+                break
             chunk_size = min(BUFFER_SIZE, filesize - received)
             chunk = _recv_exactly(sock, chunk_size)
             if chunk is None:
                 break
             f.write(chunk)
             received += len(chunk)
+            if progress_callback:
+                progress_callback(received, filesize)
 
     return received
 
