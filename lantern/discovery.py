@@ -6,7 +6,10 @@ listen on the same UDP port and maintain a dict of known peers, expiring
 entries that haven't been seen recently.
 
 Beacon payload format (UTF-8 string):
-    LANTERN_DISCOVER:<peer_id>:<hostname>:<tcp_port>
+    LANTERN_DISCOVER:<peer_id>:<tcp_port>:<hostname>
+
+The hostname field is last so that colons inside a hostname (valid on some
+systems) do not corrupt parsing — the first three fields are always fixed.
 """
 
 import socket
@@ -18,6 +21,7 @@ from .config import UDP_PORT, TCP_PORT, BROADCAST_INTERVAL, PEER_TIMEOUT, PEER_I
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -27,22 +31,23 @@ def get_broadcast_addresses():
     """Get all broadcast addresses for local interfaces."""
     if not PSUTIL_AVAILABLE:
         return ["<broadcast>", "255.255.255.255"]
-    
+
     broadcasts = []
-    
+
     for iface, addrs in psutil.net_if_addrs().items():
         for addr in addrs:
             if addr.family == socket.AF_INET:
                 if addr.address.startswith("127."):
                     continue
-                ip_parts = addr.address.split('.')
-                mask_parts = addr.netmask.split('.')
-                broadcast = '.'.join(
-                    str(int(ip_parts[i]) | (255 - int(mask_parts[i])))
-                    for i in range(4)
+                if addr.netmask is None:
+                    continue
+                ip_parts = addr.address.split(".")
+                mask_parts = addr.netmask.split(".")
+                broadcast = ".".join(
+                    str(int(ip_parts[i]) | (255 - int(mask_parts[i]))) for i in range(4)
                 )
                 broadcasts.append(broadcast)
-    
+
     return broadcasts if broadcasts else ["255.255.255.255"]
 
 
@@ -81,12 +86,14 @@ class PeerDiscovery:
                 if now - info["last_seen"] > PEER_TIMEOUT:
                     expired.append(pid)
                 else:
-                    active.append({
-                        "peer_id": pid,
-                        "ip": info["ip"],
-                        "hostname": info["hostname"],
-                        "tcp_port": info["tcp_port"],
-                    })
+                    active.append(
+                        {
+                            "peer_id": pid,
+                            "ip": info["ip"],
+                            "hostname": info["hostname"],
+                            "tcp_port": info["tcp_port"],
+                        }
+                    )
             for pid in expired:
                 del self._peers[pid]
         return active
@@ -96,7 +103,9 @@ class PeerDiscovery:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.settimeout(1)
 
-        payload = f"LANTERN_DISCOVER:{self.peer_id}:{self.hostname}:{self.tcp_port}"
+        # Beacon format: LANTERN_DISCOVER:<peer_id>:<tcp_port>:<hostname>
+        # Hostname is last so colons inside it (valid on some systems) are safe.
+        payload = f"LANTERN_DISCOVER:{self.peer_id}:{self.tcp_port}:{self.hostname}"
         data = payload.encode("utf-8")
 
         try:
@@ -136,7 +145,7 @@ class PeerDiscovery:
 
         while self._running:
             try:
-                raw, (sender_ip, _) = sock.recvfrom(1024)
+                raw, (sender_ip, _) = sock.recvfrom(4096)
             except socket.timeout:
                 continue
             except OSError:
@@ -152,12 +161,16 @@ class PeerDiscovery:
         sock.close()
 
     def _handle_beacon(self, message: str, sender_ip: str) -> None:
-        """Parse a beacon message and update the known-peers dict."""
-        parts = message.split(":")
+        """Parse a beacon message and update the known-peers dict.
+
+        Format: LANTERN_DISCOVER:<peer_id>:<tcp_port>:<hostname>
+        The hostname is split last (maxsplit=3) so colons inside it are preserved.
+        """
+        parts = message.split(":", 3)
         if len(parts) != 4 or parts[0] != "LANTERN_DISCOVER":
             return
 
-        _, peer_id, hostname, tcp_port_str = parts
+        _, peer_id, tcp_port_str, hostname = parts
 
         if peer_id == self.peer_id:
             return
@@ -165,6 +178,9 @@ class PeerDiscovery:
         try:
             tcp_port = int(tcp_port_str)
         except ValueError:
+            return
+
+        if not (1 <= tcp_port <= 65535):
             return
 
         with self._lock:
