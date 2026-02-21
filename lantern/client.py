@@ -22,7 +22,11 @@ def _connect(host: str, port: int, timeout: float = 10) -> socket.socket:
     """Open a TCP connection to a remote peer."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)
-    sock.connect((host, port))
+    try:
+        sock.connect((host, port))
+    except Exception:
+        sock.close()
+        raise
     return sock
 
 
@@ -108,7 +112,14 @@ def do_download(
             raise RuntimeError(f"Invalid file size in response: {parts[1]}")
 
         os.makedirs(SHARED_DIR, exist_ok=True)
-        dest = os.path.join(SHARED_DIR, filename)
+        # Sanitize the filename to prevent path traversal: a malicious server
+        # could return a filename like "../../.bashrc" in its file listing.
+        safe_name = os.path.basename(filename)
+        if not safe_name:
+            raise RuntimeError(
+                f"Filename is invalid or empty after sanitization: {filename!r}"
+            )
+        dest = os.path.join(SHARED_DIR, safe_name)
         received = recv_file(sock, dest, filesize, progress_callback, cancel_event)
 
         if cancel_event and cancel_event.is_set():
