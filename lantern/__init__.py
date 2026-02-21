@@ -23,7 +23,6 @@ from .client import (
     fetch_file_list,
     do_download,
     do_upload,
-    do_delete,
     format_size,
 )
 from .protocol import send_msg, recv_msg, send_file, recv_file
@@ -42,7 +41,6 @@ __all__ = [
     "fetch_file_list",
     "do_download",
     "do_upload",
-    "do_delete",
     "format_size",
     "send_msg",
     "recv_msg",
