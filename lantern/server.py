@@ -8,6 +8,7 @@ resource exhaustion from a flood of incoming connections.
 """
 
 import os
+import re
 import socket
 import threading
 
@@ -18,9 +19,31 @@ from .protocol import send_msg, recv_msg, send_file, recv_file
 MAX_CONNECTIONS = 50
 
 
+# Windows reserved device names that must never be used as filenames.
+_WINDOWS_RESERVED = re.compile(
+    r"^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)", re.IGNORECASE
+)
+
+
 def _safe_filename(filename: str) -> str:
-    """Sanitize filename to prevent path traversal attacks."""
-    return os.path.basename(filename)
+    """Sanitize an untrusted filename.
+
+    - Strips directory components (prevents path traversal).
+    - Removes null bytes.
+    - Rejects Windows reserved device names (CON, NUL, COM1 … LPT9).
+    - Falls back to "upload" if the result is empty or a bare dot/dotdot.
+    """
+    # Strip directory components
+    name = os.path.basename(filename)
+    # Remove null bytes
+    name = name.replace("\x00", "")
+    # Reject empty, ".", ".."
+    if name in ("", ".", ".."):
+        return "upload"
+    # Reject Windows reserved names
+    if _WINDOWS_RESERVED.match(name):
+        return "upload"
+    return name
 
 
 class FileServer:
@@ -52,11 +75,16 @@ class FileServer:
     # ------------------------------------------------------------------
 
     def _accept_loop(self) -> None:
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._sock.bind(("0.0.0.0", self.port))
-        self._sock.listen(5)
-        self._sock.settimeout(2)  # so we can check self._running periodically
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind(("0.0.0.0", self.port))
+            sock.listen(5)
+        except OSError:
+            sock.close()
+            return
+        sock.settimeout(2)  # so we can check self._running periodically
+        self._sock = sock
 
         while self._running:
             try:
@@ -154,7 +182,11 @@ class FileServer:
         try:
             filesize = int(filesize_str)
         except ValueError:
-            send_msg(conn, f"ERROR{SEPARATOR}Invalid file size: {filesize_str}")
+            send_msg(conn, f"ERROR{SEPARATOR}Invalid file size")
+            return
+
+        if filesize < 0:
+            send_msg(conn, f"ERROR{SEPARATOR}File size must not be negative")
             return
 
         # Tell the sender we're ready
