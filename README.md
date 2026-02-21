@@ -7,7 +7,7 @@
 
 A peer-to-peer file sharing system with a beautiful terminal UI (TUI) dashboard.
 
-![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## Features
@@ -45,12 +45,6 @@ Launch the terminal dashboard (beautiful visual interface):
 
 ```bash
 lantern
-```
-
-Or explicitly:
-
-```bash
-lantern --tui
 ```
 
 ### CLI Mode
@@ -101,7 +95,7 @@ Lantern is designed for **trusted local area networks only** (e.g. your home net
 
 ## Requirements
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - textual >= 0.50.0
 - psutil >= 5.9.0
 

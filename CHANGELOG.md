@@ -10,10 +10,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Security
 - Removed remote file deletion — any peer on the LAN could previously wipe
   another peer's files with no authentication or confirmation.
-- Added 2 GB hard cap on incoming uploads to prevent disk exhaustion attacks.
+- Added 64 KB cap on incoming control messages to prevent memory exhaustion
+  from a malicious peer sending a forged length prefix.
+- Capped concurrent server connections at 50 to prevent thread exhaustion.
+- Server no longer echoes raw client input or exception internals in error
+  responses, preventing information leakage.
+- Download path now sanitized with `os.path.basename`; a malicious server
+  can no longer write files outside the shared directory via path traversal.
+- `_safe_filename` hardened to strip null bytes, reject `..`, and block
+  Windows reserved names (CON, NUL, COM1–COM9, LPT1–LPT9).
+- Beacon parser now validates TCP port range (1–65535) and handles hostnames
+  containing colons without corrupting the parsed fields.
+- Untrusted peer hostnames and filenames are now escaped before being
+  rendered in the TUI, preventing Rich markup injection.
 
 ### Fixed
-- Shared directory is now a stable path (`~/Lantern/shared/`) instead of a
+- Shared directory is now a stable path (`~/Downloads/Lantern`) instead of a
   new timestamped folder created on every launch.
 - Invalid port strings (e.g. `list host:notaport`) no longer crash the CLI
   or TUI command input — a clear error message is shown instead.
@@ -21,6 +33,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   `client.py`; corrected.
 - Server upload handler now uses the shared `recv_file` helper from
   `protocol.py` instead of a duplicated raw receive loop.
+- `recv_file` now deletes the partial file if the transfer is cancelled or
+  the connection drops, leaving no corrupt data in the shared directory.
+- `_connect` socket is now closed if `connect()` raises, fixing a FD leak.
+- Server socket is now closed if `bind()` or `listen()` raises.
+- `psutil` returning `None` for a network interface netmask no longer causes
+  an `AttributeError` in `get_broadcast_addresses`.
+- `--port` CLI argument now validates the range 1–65535.
+- TUI `CSS_PATH` now uses the absolute path resolved at import time so the
+  stylesheet loads correctly after `pip install`.
+- `__version__` in `__init__.py` updated to match `pyproject.toml` (1.0.3).
 
 ### Added
 - 17-test suite covering `protocol.py` (message framing, file transfer,
