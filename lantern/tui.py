@@ -29,6 +29,7 @@ from textual.widgets import (
 )
 from textual.screen import ModalScreen, Screen
 from textual.reactive import reactive
+from rich.markup import escape as markup_escape
 
 from .config import TCP_PORT, SHARED_DIR, PEER_ID
 from .discovery import PeerDiscovery
@@ -438,8 +439,8 @@ class LanternApp(App):
             if p["peer_id"] not in existing_ids:
                 self._log(
                     f"[#00ff9f]Discovered[/] peer "
-                    f"[bold #5ec4ff]{p['hostname']}[/] "
-                    f"([#718ca1]{p['ip']}:{p['tcp_port']}[/])"
+                    f"[bold #5ec4ff]{markup_escape(p['hostname'])}[/] "
+                    f"([#718ca1]{markup_escape(p['ip'])}:{p['tcp_port']}[/])"
                 )
 
         # Log lost peers
@@ -450,8 +451,8 @@ class LanternApp(App):
         peer_list.clear()
         for p in peers:
             label = Static(
-                f"[#00ff9f]●[/] [bold #5ec4ff]{p['hostname']}[/]\n"
-                f"  [#718ca1]{p['ip']}:{p['tcp_port']}[/]",
+                f"[#00ff9f]●[/] [bold #5ec4ff]{markup_escape(p['hostname'])}[/]\n"
+                f"  [#718ca1]{markup_escape(p['ip'])}:{p['tcp_port']}[/]",
                 classes="peer-entry",
             )
             item = ListItem(label)
@@ -470,8 +471,8 @@ class LanternApp(App):
             self.selected_peer = peer
             header_label = self.query_one("#files-header-text", Label)
             header_label.update(
-                f"FILES ON: [bold #5ec4ff]{peer['hostname']}[/]  "
-                f"([#718ca1]{peer['ip']}:{peer['tcp_port']}[/])"
+                f"FILES ON: [bold #5ec4ff]{markup_escape(peer['hostname'])}[/]  "
+                f"([#718ca1]{markup_escape(peer['ip'])}:{peer['tcp_port']}[/])"
             )
             self._refresh_remote_files()
 
@@ -502,7 +503,7 @@ class LanternApp(App):
             self.app.call_from_thread(
                 self._log,
                 f"[#e74c3c]Error[/] listing files from "
-                f"[#5ec4ff]{peer['hostname']}[/]: {e}",
+                f"[#5ec4ff]{markup_escape(peer['hostname'])}[/]: {markup_escape(str(e))}",
             )
 
     def _update_remote_table(self, files: list[dict]) -> None:
@@ -539,7 +540,7 @@ class LanternApp(App):
         if self.selected_peer:
             self._refresh_remote_files()
             self._log(
-                f"Refreshing files from [#5ec4ff]{self.selected_peer['hostname']}[/]..."
+                f"Refreshing files from [#5ec4ff]{markup_escape(self.selected_peer['hostname'])}[/]..."
             )
         else:
             self._log("No peer selected — refreshed local files only.")
@@ -562,8 +563,8 @@ class LanternApp(App):
     def _do_upload_async(self, peer: dict, filepath: str) -> None:
         self.app.call_from_thread(
             self._log,
-            f"Uploading [bold]{os.path.basename(filepath)}[/] to "
-            f"[#5ec4ff]{peer['hostname']}[/]...",
+            f"Uploading [bold]{markup_escape(os.path.basename(filepath))}[/] to "
+            f"[#5ec4ff]{markup_escape(peer['hostname'])}[/]...",
         )
 
         progress_screen = None
@@ -647,7 +648,7 @@ class LanternApp(App):
     ) -> None:
         self.app.call_from_thread(
             self._log,
-            f"Downloading [bold]{filename}[/] from [#5ec4ff]{peer['hostname']}[/]...",
+            f"Downloading [bold]{markup_escape(filename)}[/] from [#5ec4ff]{markup_escape(peer['hostname'])}[/]...",
         )
 
         progress_screen = None
@@ -789,8 +790,8 @@ class LanternApp(App):
         else:
             for p in peers:
                 self._log(
-                    f"  [#00ff9f]●[/] [bold #5ec4ff]{p['hostname']}[/]  "
-                    f"[#718ca1]{p['ip']}:{p['tcp_port']}[/]"
+                    f"  [#00ff9f]●[/] [bold #5ec4ff]{markup_escape(p['hostname'])}[/]  "
+                    f"[#718ca1]{markup_escape(p['ip'])}:{p['tcp_port']}[/]"
                 )
 
     @work(thread=True)
@@ -805,7 +806,7 @@ class LanternApp(App):
                 for f in files:
                     self.app.call_from_thread(
                         self._log,
-                        f"  {f['name']}  [#718ca1]{format_size(f['size'])}[/]",
+                        f"  {markup_escape(f['name'])}  [#718ca1]{format_size(f['size'])}[/]",
                     )
         except Exception as e:
             self.app.call_from_thread(
