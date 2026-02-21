@@ -66,7 +66,6 @@ Available CLI commands:
 - `list <host[:port]>` - List files on remote peer
 - `download <host[:port]> <file>` - Download a file
 - `upload <host[:port]> <path>` - Upload a file
-- `delete <host[:port]> <file>` - Delete remote file
 - `myfiles` - List your shared files
 - `help` - Show help
 - `quit` - Exit
@@ -86,7 +85,6 @@ lantern --port 6000
 | `t` | Toggle theme |
 | `u` | Upload file |
 | `d` | Download file |
-| `x` | Delete file |
 | `Tab` | Cycle focus |
 | `q` | Quit |
 

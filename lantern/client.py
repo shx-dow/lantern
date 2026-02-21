@@ -39,6 +39,7 @@ def format_size(size_bytes: int | float) -> str:
 # Core API — returns structured data (used by TUI and CLI wrappers)
 # ======================================================================
 
+
 def fetch_file_list(host: str, port: int) -> list[dict]:
     """
     Fetch the file listing from a remote peer.
@@ -138,7 +139,9 @@ def do_upload(host: str, port: int, filepath: str) -> str:
         response = recv_msg(sock)
         if response is None or not response.startswith("OK"):
             parts = (response or "").split(SEPARATOR, 1)
-            raise RuntimeError(f"Peer rejected upload: {parts[1] if len(parts) > 1 else 'unknown'}")
+            raise RuntimeError(
+                f"Peer rejected upload: {parts[1] if len(parts) > 1 else 'unknown'}"
+            )
 
         sent = 0
         with open(filepath, "rb") as f:
@@ -155,32 +158,9 @@ def do_upload(host: str, port: int, filepath: str) -> str:
             return parts[1] if len(parts) > 1 else "Upload complete"
         else:
             parts = (confirm or "").split(SEPARATOR, 1)
-            raise RuntimeError(f"Upload issue: {parts[1] if len(parts) > 1 else 'unknown'}")
-    finally:
-        sock.close()
-
-
-def do_delete(host: str, port: int, filename: str) -> str:
-    """
-    Request deletion of a file on a remote peer.
-
-    Returns a success message string.
-    Raises RuntimeError on failure.
-    """
-    sock = _connect(host, port)
-    try:
-        send_msg(sock, f"DELETE{SEPARATOR}{filename}")
-        response = recv_msg(sock)
-        if response is None:
-            raise RuntimeError("No response from peer")
-
-        parts = response.split(SEPARATOR, 1)
-        msg = parts[1] if len(parts) > 1 else ""
-
-        if parts[0] == "OK":
-            return msg
-        else:
-            raise RuntimeError(msg)
+            raise RuntimeError(
+                f"Upload issue: {parts[1] if len(parts) > 1 else 'unknown'}"
+            )
     finally:
         sock.close()
 
@@ -188,6 +168,7 @@ def do_delete(host: str, port: int, filename: str) -> str:
 # ======================================================================
 # CLI wrappers — print results (used by peer.py CLI mode)
 # ======================================================================
+
 
 def list_files(host: str, port: int) -> None:
     """Print the file listing from a remote peer."""
@@ -202,7 +183,7 @@ def list_files(host: str, port: int) -> None:
         return
 
     print(f"  {'Filename':<40} {'Size':>12}")
-    print(f"  {'-'*40} {'-'*12}")
+    print(f"  {'-' * 40} {'-' * 12}")
     for f in files:
         print(f"  {f['name']:<40} {format_size(f['size']):>12}")
 
@@ -220,15 +201,6 @@ def upload_file(host: str, port: int, filepath: str) -> None:
     """Upload a file and print the result."""
     try:
         msg = do_upload(host, port, filepath)
-        print(f"  {msg}")
-    except RuntimeError as e:
-        print(f"  [!] {e}")
-
-
-def delete_file(host: str, port: int, filename: str) -> None:
-    """Delete a remote file and print the result."""
-    try:
-        msg = do_delete(host, port, filename)
         print(f"  {msg}")
     except RuntimeError as e:
         print(f"  [!] {e}")

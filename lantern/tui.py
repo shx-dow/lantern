@@ -37,7 +37,6 @@ from .client import (
     fetch_file_list,
     do_download,
     do_upload,
-    do_delete,
     format_size,
 )
 
@@ -50,13 +49,18 @@ CSS_FILE = os.path.join(os.path.dirname(__file__), "styles", "lantern.css")
 # Transfer Progress Modal
 # ==============================================================================
 
+
 class TransferProgressScreen(ModalScreen):
     """Modal showing transfer progress with progress bar."""
 
     BINDINGS = [Binding("escape", "close", "Close")]
 
     def __init__(
-        self, operation: str, filename: str, total_size: int, cancel_event: threading.Event = None
+        self,
+        operation: str,
+        filename: str,
+        total_size: int,
+        cancel_event: threading.Event = None,
     ):
         super().__init__()
         self.operation = operation
@@ -133,6 +137,7 @@ class TransferProgressScreen(ModalScreen):
 # Notification Widget
 # ==============================================================================
 
+
 class Notification(Static):
     """Toast notification widget."""
 
@@ -166,6 +171,7 @@ class Notification(Static):
 # Help Modal
 # ==============================================================================
 
+
 class HelpScreen(ModalScreen):
     """Full help overlay."""
 
@@ -182,7 +188,6 @@ class HelpScreen(ModalScreen):
                 "  [#e0c97f]t[/]           Toggle theme (Lantern Dark / Light)\n"
                 "  [#e0c97f]u[/]           Upload a file to the selected peer\n"
                 "  [#e0c97f]d[/]           Download the selected file\n"
-                "  [#e0c97f]x[/]           Delete the selected file on remote peer\n"
                 "  [#e0c97f]Tab[/]         Cycle focus between panels\n"
                 "  [#e0c97f]q[/]           Quit Lantern\n"
                 "\n"
@@ -192,7 +197,6 @@ class HelpScreen(ModalScreen):
                 "  [#718ca1]list <host[:port]>[/]               List remote files\n"
                 "  [#718ca1]download <host[:port]> <file>[/]    Download a file\n"
                 "  [#718ca1]upload <host[:port]> <path>[/]      Upload a file\n"
-                "  [#718ca1]delete <host[:port]> <file>[/]      Delete remote file\n"
                 "  [#718ca1]peers[/]                            Show discovered peers\n"
                 "  [#718ca1]myfiles[/]                          Refresh local files\n",
                 id="help-content",
@@ -207,6 +211,7 @@ class HelpScreen(ModalScreen):
 # ==============================================================================
 # Upload Modal
 # ==============================================================================
+
 
 class UploadScreen(ModalScreen[str | None]):
     """Modal dialog to enter a file path for uploading."""
@@ -239,6 +244,7 @@ class UploadScreen(ModalScreen[str | None]):
 # Loading Screen
 # ==============================================================================
 
+
 class LoadingScreen(Screen):
     """Simple loading screen with just the logo."""
 
@@ -254,7 +260,7 @@ class LoadingScreen(Screen):
             "[bold #EBD5AB]| |   __ _ _ _| |_ ___ _ _ _ _  [/]\n"
             "[bold #EBD5AB]| |__/ _` | ' \\  _/ -_) '_| ' \\ [/]\n"
             "[bold #EBD5AB]|____\\__,_|_||_\\__\\___|_| |_||_|[/]",
-            id="loading-logo"
+            id="loading-logo",
         )
 
     def on_mount(self) -> None:
@@ -265,7 +271,7 @@ class LoadingScreen(Screen):
         # Dismiss on any key press immediately
         if self.is_mounted:
             self.action_dismiss()
-        
+
     def action_dismiss(self) -> None:
         """Dismiss the loading screen safely."""
         if self.is_mounted:
@@ -275,6 +281,7 @@ class LoadingScreen(Screen):
 # ==============================================================================
 # Main TUI App
 # ==============================================================================
+
 
 class LanternApp(App):
     """Lantern P2P File Sharing — Terminal Dashboard."""
@@ -290,7 +297,6 @@ class LanternApp(App):
         Binding("t", "toggle_app_theme", "Theme", show=True),
         Binding("u", "upload_file", "Upload", show=True),
         Binding("d", "download_file", "Download", show=True),
-        Binding("x", "delete_file", "Delete", show=True),
         Binding("q", "quit_app", "Quit", show=True),
     ]
 
@@ -340,7 +346,6 @@ class LanternApp(App):
                 with Horizontal(id="action-bar"):
                     yield Button("Upload", id="btn-upload")
                     yield Button("Download", id="btn-download")
-                    yield Button("Delete", id="btn-delete")
                     yield Button("Refresh", id="btn-refresh")
 
         # ── Log panel ──
@@ -368,12 +373,14 @@ class LanternApp(App):
         # Periodic refresh timers
         self.set_interval(3.0, self._poll_peers)
         self.set_interval(10.0, self._refresh_my_files)
-        
+
         # Log startup info
-        self._log(f"Lantern started  [bold #5ec4ff]peer_id={PEER_ID}[/]  tcp_port={self.tcp_port}")
+        self._log(
+            f"Lantern started  [bold #5ec4ff]peer_id={PEER_ID}[/]  tcp_port={self.tcp_port}"
+        )
         self._log(f"Shared directory: [#718ca1]{SHARED_DIR}[/]")
         self._log("Discovering peers on the network...")
-        
+
         # Show loading screen first - logs will appear after it's dismissed
         self.push_screen(LoadingScreen())
 
@@ -635,11 +642,12 @@ class LanternApp(App):
         self._do_download_async(peer, filename, filesize)
 
     @work(thread=True)
-    def _do_download_async(self, peer: dict, filename: str, filesize: int = None) -> None:
+    def _do_download_async(
+        self, peer: dict, filename: str, filesize: int = None
+    ) -> None:
         self.app.call_from_thread(
             self._log,
-            f"Downloading [bold]{filename}[/] from "
-            f"[#5ec4ff]{peer['hostname']}[/]...",
+            f"Downloading [bold]{filename}[/] from [#5ec4ff]{peer['hostname']}[/]...",
         )
 
         progress_screen = None
@@ -699,57 +707,8 @@ class LanternApp(App):
                 "error",
             )
 
-    def action_delete_file(self) -> None:
-        if not self.selected_peer:
-            self._log("[#e0c97f]Warning:[/] Select a peer first.")
-            return
-
-        table = self.query_one("#remote-files-table", DataTable)
-        if table.row_count == 0:
-            self._log("[#e0c97f]Warning:[/] No files to delete.")
-            return
-
-        try:
-            row_key, _ = table.coordinate_to_cell_key(table.cursor_coordinate)
-            row_data = table.get_row(row_key)
-            filename = row_data[0]
-        except Exception:
-            self._log("[#e0c97f]Warning:[/] Select a file in the table first.")
-            return
-
-        peer = self.selected_peer
-        self._do_delete_async(peer, filename)
-
-    @work(thread=True)
-    def _do_delete_async(self, peer: dict, filename: str) -> None:
-        self.app.call_from_thread(
-            self._log,
-            f"Deleting [bold]{filename}[/] from "
-            f"[#5ec4ff]{peer['hostname']}[/]...",
-        )
-        try:
-            msg = do_delete(peer["ip"], peer["tcp_port"], filename)
-            self.app.call_from_thread(
-                self._log,
-                f"[#00ff9f]Deleted:[/] {msg}",
-            )
-            self.app.call_from_thread(
-                self.show_notification,
-                f"Deleted {filename}",
-                "success"
-            )
-            self._refresh_remote_files()
-        except Exception as e:
-            self.app.call_from_thread(
-                self._log,
-                f"[#e74c3c]Delete failed:[/] {e}",
-            )
-            self.app.call_from_thread(
-                self.show_notification,
-                f"Delete failed: {e}",
-                "error"
-            )
-
+    # --------------------------------------------------------------------------
+    # Button handlers
     # --------------------------------------------------------------------------
     # Button handlers
     # --------------------------------------------------------------------------
@@ -760,8 +719,6 @@ class LanternApp(App):
             self.action_upload_file()
         elif btn_id == "btn-download":
             self.action_download_file()
-        elif btn_id == "btn-delete":
-            self.action_delete_file()
         elif btn_id == "btn-refresh":
             self.action_refresh_files()
 
@@ -799,11 +756,6 @@ class LanternApp(App):
         elif cmd == "upload" and len(tokens) >= 3:
             host, port = self._parse_target(tokens[1])
             self._do_upload_async(
-                {"ip": host, "tcp_port": port, "hostname": host}, tokens[2]
-            )
-        elif cmd == "delete" and len(tokens) >= 3:
-            host, port = self._parse_target(tokens[1])
-            self._do_delete_async(
                 {"ip": host, "tcp_port": port, "hostname": host}, tokens[2]
             )
         elif cmd in ("quit", "exit"):
@@ -852,6 +804,7 @@ class LanternApp(App):
 # ==============================================================================
 # Entry point (called from peer.py)
 # ==============================================================================
+
 
 def run_tui(discovery: PeerDiscovery, file_server: FileServer, tcp_port: int) -> None:
     """Launch the Lantern TUI."""

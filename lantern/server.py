@@ -86,8 +86,6 @@ class FileServer:
                 self._handle_download(conn, parts[1])
             elif cmd == "UPLOAD" and len(parts) >= 3:
                 self._handle_upload(conn, parts[1], parts[2])
-            elif cmd == "DELETE" and len(parts) >= 2:
-                self._handle_delete(conn, parts[1])
             else:
                 send_msg(conn, f"ERROR{SEPARATOR}Unknown command: {command_msg}")
         except Exception as e:
@@ -130,7 +128,9 @@ class FileServer:
         send_msg(conn, f"OK{SEPARATOR}{filesize}")
         send_file(conn, filepath)
 
-    def _handle_upload(self, conn: socket.socket, filename: str, filesize_str: str) -> None:
+    def _handle_upload(
+        self, conn: socket.socket, filename: str, filesize_str: str
+    ) -> None:
         """Receive a file from the peer and save it."""
         filename = _safe_filename(filename)
         os.makedirs(SHARED_DIR, exist_ok=True)
@@ -159,19 +159,7 @@ class FileServer:
         if received == filesize:
             send_msg(conn, f"OK{SEPARATOR}Received {filename} ({filesize} bytes)")
         else:
-            send_msg(conn, f"ERROR{SEPARATOR}Incomplete transfer: got {received}/{filesize} bytes")
-
-    def _handle_delete(self, conn: socket.socket, filename: str) -> None:
-        """Delete a file from the shared directory."""
-        filename = _safe_filename(filename)
-        filepath = os.path.join(SHARED_DIR, filename)
-
-        if not os.path.isfile(filepath):
-            send_msg(conn, f"ERROR{SEPARATOR}File not found: {filename}")
-            return
-
-        try:
-            os.remove(filepath)
-            send_msg(conn, f"OK{SEPARATOR}Deleted {filename}")
-        except OSError as e:
-            send_msg(conn, f"ERROR{SEPARATOR}Could not delete {filename}: {e}")
+            send_msg(
+                conn,
+                f"ERROR{SEPARATOR}Incomplete transfer: got {received}/{filesize} bytes",
+            )

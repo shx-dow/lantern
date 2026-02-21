@@ -17,7 +17,7 @@ import sys
 from .config import TCP_PORT, SHARED_DIR, PEER_ID
 from .discovery import PeerDiscovery
 from .server import FileServer
-from .client import list_files, download_file, upload_file, delete_file
+from .client import list_files, download_file, upload_file
 
 
 def _format_size(size_bytes: int) -> str:
@@ -46,7 +46,6 @@ def _print_help() -> None:
   list <host[:port]>               List files on a remote peer
   download <host[:port]> <file>    Download a file from a peer
   upload <host[:port]> <file>      Upload a local file to a peer
-  delete <host[:port]> <file>      Delete a file on a remote peer
   myfiles                          List your own shared files
   help                             Show this help message
   quit / exit                      Shut down this peer
@@ -57,14 +56,16 @@ def _print_help() -> None:
 def _list_local_files() -> None:
     """Print files in the local shared directory."""
     os.makedirs(SHARED_DIR, exist_ok=True)
-    files = [f for f in os.listdir(SHARED_DIR) if os.path.isfile(os.path.join(SHARED_DIR, f))]
+    files = [
+        f for f in os.listdir(SHARED_DIR) if os.path.isfile(os.path.join(SHARED_DIR, f))
+    ]
 
     if not files:
         print("  (no files in shared_files/)")
         return
 
     print(f"  {'Filename':<40} {'Size':>12}")
-    print(f"  {'-'*40} {'-'*12}")
+    print(f"  {'-' * 40} {'-' * 12}")
     for name in sorted(files):
         size = os.path.getsize(os.path.join(SHARED_DIR, name))
         print(f"  {name:<40} {_format_size(size):>12}")
@@ -72,8 +73,12 @@ def _list_local_files() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Lantern P2P File Sharing")
-    parser.add_argument("--port", type=int, default=TCP_PORT, help="TCP port to listen on")
-    parser.add_argument("--cli", action="store_true", help="Launch CLI mode instead of TUI dashboard")
+    parser.add_argument(
+        "--port", type=int, default=TCP_PORT, help="TCP port to listen on"
+    )
+    parser.add_argument(
+        "--cli", action="store_true", help="Launch CLI mode instead of TUI dashboard"
+    )
     args = parser.parse_args()
 
     tcp_port = args.port
@@ -97,6 +102,7 @@ def main() -> None:
     else:
         # ── TUI mode (default) ──
         from .tui import run_tui
+
         try:
             run_tui(discovery, server, tcp_port)
         finally:
@@ -134,7 +140,7 @@ def main() -> None:
                     print("  No peers discovered yet (waiting for beacons...).")
                 else:
                     print(f"  {'Peer ID':<12} {'Hostname':<20} {'Address':>22}")
-                    print(f"  {'-'*12} {'-'*20} {'-'*22}")
+                    print(f"  {'-' * 12} {'-' * 20} {'-' * 22}")
                     for p in peers:
                         addr = f"{p['ip']}:{p['tcp_port']}"
                         print(f"  {p['peer_id']:<12} {p['hostname']:<20} {addr:>22}")
@@ -177,18 +183,6 @@ def main() -> None:
                     upload_file(host, port, filepath)
                 except Exception as e:
                     print(f"  [!] Upload failed: {e}")
-
-            # ----------------------------------------------------------
-            elif cmd == "delete":
-                if len(tokens) < 3:
-                    print("  Usage: delete <host[:port]> <filename>")
-                    continue
-                host, port = _parse_target(tokens[1], tcp_port)
-                filename = tokens[2]
-                try:
-                    delete_file(host, port, filename)
-                except Exception as e:
-                    print(f"  [!] Delete failed: {e}")
 
             # ----------------------------------------------------------
             else:
