@@ -51,8 +51,6 @@ Issues = "https://github.com/shx-dow/lantern/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["lantern"]
 
-[tool.hatch.build.targets.wheel.shared-files]
-"lantern/styles" = "lantern/styles"
 
 [tool.black]
 line-length = 88
