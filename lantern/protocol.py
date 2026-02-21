@@ -79,23 +79,41 @@ def recv_file(
     """
     Receive a file: read filesize raw bytes and write them to *filepath*.
 
-    Returns the number of bytes received.
+    Returns the number of bytes received.  If the transfer is cancelled or
+    the connection drops before completion, the partial file is deleted so
+    the shared directory is never left with corrupt data.
+
     progress_callback: optional callable(current_bytes, total_bytes)
     cancel_event: optional threading.Event to cancel the transfer
     """
     received = 0
-    with open(filepath, "wb") as f:
-        while received < filesize:
-            if cancel_event and cancel_event.is_set():
-                break
-            chunk_size = min(BUFFER_SIZE, filesize - received)
-            chunk = _recv_exactly(sock, chunk_size)
-            if chunk is None:
-                break
-            f.write(chunk)
-            received += len(chunk)
-            if progress_callback:
-                progress_callback(received, filesize)
+    try:
+        with open(filepath, "wb") as f:
+            while received < filesize:
+                if cancel_event and cancel_event.is_set():
+                    break
+                chunk_size = min(BUFFER_SIZE, filesize - received)
+                chunk = _recv_exactly(sock, chunk_size)
+                if chunk is None:
+                    break
+                f.write(chunk)
+                received += len(chunk)
+                if progress_callback:
+                    progress_callback(received, filesize)
+    except Exception:
+        # Remove the partial file before re-raising
+        try:
+            os.remove(filepath)
+        except OSError:
+            pass
+        raise
+
+    if received < filesize:
+        # Incomplete transfer (cancelled or disconnected) — clean up
+        try:
+            os.remove(filepath)
+        except OSError:
+            pass
 
     return received
 
