@@ -289,7 +289,7 @@ class LanternApp(App):
 
     TITLE = "LANTERN"
     SUB_TITLE = "P2P File Sharing"
-    CSS_PATH = "styles/lantern.css"
+    CSS_PATH = CSS_FILE  # absolute path — works both from source and after pip install
     ENABLE_COMMAND_PALETTE = False
 
     BINDINGS = [
