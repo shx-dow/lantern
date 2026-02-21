@@ -746,27 +746,40 @@ class LanternApp(App):
             self._refresh_my_files()
             self._log("Refreshed local file list.")
         elif cmd == "list" and len(tokens) >= 2:
-            host, port = self._parse_target(tokens[1])
-            self._cmd_list(host, port)
+            result = self._parse_target(tokens[1])
+            if result:
+                host, port = result
+                self._cmd_list(host, port)
         elif cmd == "download" and len(tokens) >= 3:
-            host, port = self._parse_target(tokens[1])
-            self._do_download_async(
-                {"ip": host, "tcp_port": port, "hostname": host}, tokens[2]
-            )
+            result = self._parse_target(tokens[1])
+            if result:
+                host, port = result
+                self._do_download_async(
+                    {"ip": host, "tcp_port": port, "hostname": host}, tokens[2]
+                )
         elif cmd == "upload" and len(tokens) >= 3:
-            host, port = self._parse_target(tokens[1])
-            self._do_upload_async(
-                {"ip": host, "tcp_port": port, "hostname": host}, tokens[2]
-            )
+            result = self._parse_target(tokens[1])
+            if result:
+                host, port = result
+                self._do_upload_async(
+                    {"ip": host, "tcp_port": port, "hostname": host}, tokens[2]
+                )
         elif cmd in ("quit", "exit"):
             self.action_quit_app()
         else:
             self._log(f"[#e0c97f]Unknown command:[/] {raw}  (press F1 for help)")
 
-    def _parse_target(self, target: str) -> tuple[str, int]:
+    def _parse_target(self, target: str) -> tuple[str, int] | None:
+        """Parse 'host:port'. Returns None and logs an error if port is invalid."""
         if ":" in target:
             host, port_str = target.rsplit(":", 1)
-            return host, int(port_str)
+            try:
+                return host, int(port_str)
+            except ValueError:
+                self._log(
+                    f"[#e74c3c]Error:[/] Invalid port '{port_str}' — must be an integer."
+                )
+                return None
         return target, self.tcp_port
 
     def _cmd_peers(self) -> None:

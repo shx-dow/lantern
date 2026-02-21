@@ -28,13 +28,18 @@ def _format_size(size_bytes: int) -> str:
     return f"{size_bytes:.1f} TB"
 
 
-def _parse_target(target: str, default_port: int) -> tuple[str, int]:
+def _parse_target(target: str, default_port: int) -> tuple[str, int] | None:
     """
     Parse a 'host:port' string.  If port is omitted, *default_port* is used.
+    Returns None if the port portion is not a valid integer.
     """
     if ":" in target:
         host, port_str = target.rsplit(":", 1)
-        return host, int(port_str)
+        try:
+            return host, int(port_str)
+        except ValueError:
+            print(f"  [!] Invalid port: '{port_str}' — must be an integer.")
+            return None
     return target, default_port
 
 
@@ -154,7 +159,10 @@ def main() -> None:
                 if len(tokens) < 2:
                     print("  Usage: list <host[:port]>")
                     continue
-                host, port = _parse_target(tokens[1], tcp_port)
+                target = _parse_target(tokens[1], tcp_port)
+                if target is None:
+                    continue
+                host, port = target
                 try:
                     list_files(host, port)
                 except Exception as e:
@@ -165,7 +173,10 @@ def main() -> None:
                 if len(tokens) < 3:
                     print("  Usage: download <host[:port]> <filename>")
                     continue
-                host, port = _parse_target(tokens[1], tcp_port)
+                target = _parse_target(tokens[1], tcp_port)
+                if target is None:
+                    continue
+                host, port = target
                 filename = tokens[2]
                 try:
                     download_file(host, port, filename)
@@ -177,7 +188,10 @@ def main() -> None:
                 if len(tokens) < 3:
                     print("  Usage: upload <host[:port]> <filepath>")
                     continue
-                host, port = _parse_target(tokens[1], tcp_port)
+                target = _parse_target(tokens[1], tcp_port)
+                if target is None:
+                    continue
+                host, port = target
                 filepath = tokens[2]
                 try:
                     upload_file(host, port, filepath)
