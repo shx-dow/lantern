@@ -23,7 +23,7 @@ A peer-to-peer file sharing system with a beautiful terminal UI (TUI) dashboard.
 
 ## Installation
 
-### From PyPI (when published)
+### From PyPI
 
 ```bash
 pip install lantern-p2p
@@ -84,7 +84,7 @@ lantern --port 6000
 
 ## Configuration
 
-Shared files are stored in `~/Lantern/shared/` by default. This directory is created automatically on first run and persists across restarts.
+Shared files are stored in `~/Downloads/Lantern/` by default. This directory is created automatically on first run and persists across restarts.
 
 ## Security Notice
 
