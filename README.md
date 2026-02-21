@@ -90,7 +90,14 @@ lantern --port 6000
 
 ## Configuration
 
-Shared files are stored in the `shared_files/` directory by default. This directory is created automatically when you first run Lantern.
+Shared files are stored in `~/Lantern/shared/` by default. This directory is created automatically on first run and persists across restarts.
+
+## Security Notice
+
+Lantern is designed for **trusted local area networks only** (e.g. your home network). It has no encryption and no peer authentication.
+
+- **Do not run Lantern on public or untrusted networks** (coffee shops, offices, university Wi-Fi, etc.). Anyone on the same network can see your shared files and upload arbitrary content to your machine.
+- The shared directory is world-readable by any Lantern peer on the LAN — only share files you are comfortable with all LAN participants seeing.
 
 ## Requirements
 
