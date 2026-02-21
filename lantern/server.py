@@ -9,7 +9,7 @@ import os
 import socket
 import threading
 
-from .config import TCP_PORT, SHARED_DIR, SEPARATOR, BUFFER_SIZE
+from .config import TCP_PORT, SHARED_DIR, SEPARATOR
 from .protocol import send_msg, recv_msg, send_file, recv_file
 
 
@@ -145,16 +145,8 @@ class FileServer:
         # Tell the sender we're ready
         send_msg(conn, "OK")
 
-        # Receive the raw file bytes (no length-prefix; we already know the size)
-        received = 0
-        with open(filepath, "wb") as f:
-            while received < filesize:
-                chunk_size = min(BUFFER_SIZE, filesize - received)
-                chunk = conn.recv(chunk_size)
-                if not chunk:
-                    break
-                f.write(chunk)
-                received += len(chunk)
+        # Receive the file using the shared protocol helper
+        received = recv_file(conn, filepath, filesize)
 
         if received == filesize:
             send_msg(conn, f"OK{SEPARATOR}Received {filename} ({filesize} bytes)")
