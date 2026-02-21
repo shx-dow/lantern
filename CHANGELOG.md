@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased]
+## [1.1.0] - 2026-02-21
 
 ### Security
 - Removed remote file deletion — any peer on the LAN could previously wipe

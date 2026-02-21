@@ -4,7 +4,7 @@ Lantern - P2P File Sharing System
 A peer-to-peer file sharing application with a beautiful TUI dashboard.
 """
 
-__version__ = "1.0.3"
+__version__ = "1.1.0"
 __author__ = "shx-dow"
 
 from .config import (
