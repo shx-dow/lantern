@@ -79,7 +79,7 @@ def _list_local_files() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Lantern P2P File Sharing")
     parser.add_argument(
-        "--port", type=int, default=TCP_PORT, help="TCP port to listen on"
+        "--port", type=int, default=TCP_PORT, help="TCP port to listen on (1-65535)"
     )
     parser.add_argument(
         "--cli", action="store_true", help="Launch CLI mode instead of TUI dashboard"
@@ -87,6 +87,8 @@ def main() -> None:
     args = parser.parse_args()
 
     tcp_port = args.port
+    if not (1 <= tcp_port <= 65535):
+        parser.error(f"--port must be between 1 and 65535 (got {tcp_port})")
 
     # Ensure shared directory exists
     os.makedirs(SHARED_DIR, exist_ok=True)
@@ -177,7 +179,10 @@ def main() -> None:
                 if target is None:
                     continue
                 host, port = target
-                filename = tokens[2]
+                filename = os.path.basename(tokens[2])
+                if not filename:
+                    print("  [!] Invalid filename.")
+                    continue
                 try:
                     download_file(host, port, filename)
                 except Exception as e:
