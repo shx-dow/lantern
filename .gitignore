@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.ruff_cache
+.pytest_cache
 
 # Virtual environments
 venv/
@@ -31,3 +33,15 @@ extras/
 dist/
 build/
 *.egg-info/
+
+# Secrets / credentials — never commit these
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+credentials.json
+*.sqlite
+*.db
