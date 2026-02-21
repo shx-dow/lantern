@@ -13,10 +13,16 @@ import threading
 
 from .config import BUFFER_SIZE
 
+# Maximum size of a single control message (commands, responses, listings).
+# A 64 KB cap prevents a malicious peer from causing memory exhaustion by
+# sending a fabricated 4-byte length prefix claiming a huge payload.
+MAX_MSG_SIZE = 64 * 1024  # 64 KB
+
 
 # ---------------------------------------------------------------------------
 # Message framing (for control messages: commands, responses, file listings)
 # ---------------------------------------------------------------------------
+
 
 def send_msg(sock, text: str) -> None:
     """Send a UTF-8 string with a 4-byte length prefix."""
@@ -26,11 +32,19 @@ def send_msg(sock, text: str) -> None:
 
 
 def recv_msg(sock) -> str | None:
-    """Receive a length-prefixed UTF-8 string. Returns None on disconnect."""
+    """Receive a length-prefixed UTF-8 string. Returns None on disconnect.
+
+    Raises ValueError if the declared message length exceeds MAX_MSG_SIZE,
+    preventing memory exhaustion from a malicious peer.
+    """
     raw_len = _recv_exactly(sock, 4)
     if raw_len is None:
         return None
     msg_len = struct.unpack("!I", raw_len)[0]
+    if msg_len > MAX_MSG_SIZE:
+        raise ValueError(
+            f"Incoming message too large: {msg_len} bytes (max {MAX_MSG_SIZE})"
+        )
     raw_data = _recv_exactly(sock, msg_len)
     if raw_data is None:
         return None
@@ -40,6 +54,7 @@ def recv_msg(sock) -> str | None:
 # ---------------------------------------------------------------------------
 # File transfer
 # ---------------------------------------------------------------------------
+
 
 def send_file(sock, filepath: str) -> None:
     """Send a file: first a message with the file size, then raw bytes."""
@@ -88,6 +103,7 @@ def recv_file(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _recv_exactly(sock, num_bytes: int) -> bytes | None:
     """Read exactly *num_bytes* from the socket. Returns None on disconnect."""
