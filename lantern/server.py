@@ -1,8 +1,10 @@
 """
 TCP file server — listens for incoming connections from other peers
-and handles LIST, DOWNLOAD, UPLOAD, and DELETE commands.
+and handles LIST, DOWNLOAD, and UPLOAD commands.
 
-Each client connection is handled in its own thread.
+Each client connection is handled in its own thread.  A semaphore limits
+the number of concurrent handler threads to MAX_CONNECTIONS to prevent
+resource exhaustion from a flood of incoming connections.
 """
 
 import os
@@ -11,6 +13,9 @@ import threading
 
 from .config import TCP_PORT, SHARED_DIR, SEPARATOR
 from .protocol import send_msg, recv_msg, send_file, recv_file
+
+# Maximum number of simultaneous client connections handled at once.
+MAX_CONNECTIONS = 50
 
 
 def _safe_filename(filename: str) -> str:
@@ -25,6 +30,7 @@ class FileServer:
         self.port = port
         self._running = False
         self._sock: socket.socket | None = None
+        self._semaphore = threading.Semaphore(MAX_CONNECTIONS)
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -60,6 +66,14 @@ class FileServer:
             except OSError:
                 break
 
+            if not self._semaphore.acquire(blocking=False):
+                # Too many concurrent connections — reject gracefully.
+                try:
+                    conn.close()
+                except OSError:
+                    pass
+                continue
+
             handler = threading.Thread(
                 target=self._handle_client, args=(conn, addr), daemon=True
             )
@@ -87,14 +101,15 @@ class FileServer:
             elif cmd == "UPLOAD" and len(parts) >= 3:
                 self._handle_upload(conn, parts[1], parts[2])
             else:
-                send_msg(conn, f"ERROR{SEPARATOR}Unknown command: {command_msg}")
-        except Exception as e:
+                send_msg(conn, f"ERROR{SEPARATOR}Unknown command")
+        except Exception:
             try:
-                send_msg(conn, f"ERROR{SEPARATOR}{e}")
+                send_msg(conn, f"ERROR{SEPARATOR}Internal server error")
             except Exception:
                 pass
         finally:
             conn.close()
+            self._semaphore.release()
 
     # ------------------------------------------------------------------
     # Command handlers
