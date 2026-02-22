@@ -29,6 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "textual>=0.50.0",
+    "textual-fspicker>=1.0.0",
     "psutil>=5.9.0",
 ]
 

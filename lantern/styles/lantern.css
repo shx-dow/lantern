@@ -341,16 +341,11 @@ HelpScreen {
     margin-bottom: 1;
 }
 
-#upload-input {
+#upload-confirm-info {
     width: 100%;
-    background: #0a0e0a;
-    color: #EBD5AB;
-    border: tall #1f2b1f;
+    color: #c8d8c8;
+    padding: 1 0;
     margin-bottom: 1;
-}
-
-#upload-input:focus {
-    border: tall #1f2b1f;
 }
 
 #upload-btn-bar {
@@ -714,10 +709,8 @@ LoadingScreen {
     border-bottom: heavy #c8c8c0;
 }
 
-.app-light #upload-input {
-    background: #f0f0e8;
+.app-light #upload-confirm-info {
     color: #4a4035;
-    border: tall #c8c8c0;
 }
 
 .app-light #upload-confirm {

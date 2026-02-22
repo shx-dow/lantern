@@ -4,5 +4,8 @@
 # TUI framework - Required for the graphical terminal interface
 textual>=0.50.0
 
+# File picker widget for Textual - Required for the upload file browser
+textual-fspicker>=1.0.0
+
 # System utilities - Optional but recommended for better network interface detection
 psutil>=5.9.0
