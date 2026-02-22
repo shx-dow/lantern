@@ -5,7 +5,41 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.1] - 2026-02-22
+
+### Security
+- Uploads now require explicit consent from the receiver. Previously any peer
+  on the LAN could silently push files onto your machine without any prompt.
+  The sender now sends an `UPLOAD_REQUEST`; the receiver's TUI shows a
+  confirmation modal (filename, size, sender IP) and must accept before any
+  data is transferred. Unanswered requests time out and are auto-rejected
+  after 60 seconds.
+
+### Fixed
+- Upload progress bar never advanced during transfers — the progress callback
+  and cancel event were not wired into `do_upload`, so the modal would sit at
+  0% for the entire transfer then jump to complete. Now mirrors the download
+  flow exactly.
+- Upload file path input accepted quoted paths (e.g. `"C:\file.jpg"`) which
+  caused `WinError 123` on Windows. Replaced the text input modal entirely
+  with a `textual-fspicker` file browser — no manual path typing required.
+- Incoming upload confirmation modal rendered as a full-screen replacement
+  instead of floating over the app. Missing `align: center middle` and
+  backdrop CSS rules added, matching the Help and Transfer Progress modals.
+- Receiver had no visibility into an incoming transfer after accepting — they
+  would see nothing until the file appeared. A `TransferProgressScreen` is
+  now shown on the receiver side for files over 1 MB, with live progress
+  updates fed directly from `recv_file` via a callback on `UploadRequest`.
+- Default Textual header spinner (`HeaderIcon`) hidden via CSS — it appeared
+  as a persistent circle in the top-left corner of the app.
+
+### Added
+- `textual-fspicker >= 1.0.0` dependency for the upload file browser.
+
+---
+
 ## [1.1.0] - 2026-02-21
+
 
 ### Security
 - Removed remote file deletion — any peer on the LAN could previously wipe
