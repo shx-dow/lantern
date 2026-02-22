@@ -17,6 +17,11 @@ Header {
     align: center middle;
 }
 
+HeaderIcon {
+    display: none;
+}
+
+
 Footer {
     dock: bottom;
     background: #0d110d;
