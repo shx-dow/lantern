@@ -57,16 +57,24 @@ def recv_msg(sock) -> str | None:
 
 
 def send_file(sock, filepath: str) -> None:
-    """Send a file: first a message with the file size, then raw bytes."""
+    """Send a file: first a message with the file size, then raw bytes.
+
+    Uses socket.sendfile() for zero-copy OS-level transfer when available,
+    falling back to a manual chunk loop otherwise.
+    """
     filesize = os.path.getsize(filepath)
     send_msg(sock, str(filesize))
 
     with open(filepath, "rb") as f:
-        while True:
-            chunk = f.read(BUFFER_SIZE)
-            if not chunk:
-                break
-            sock.sendall(chunk)
+        try:
+            sock.sendfile(f)
+        except AttributeError:
+            # Fallback for platforms where sendfile is unavailable
+            while True:
+                chunk = f.read(BUFFER_SIZE)
+                if not chunk:
+                    break
+                sock.sendall(chunk)
 
 
 def recv_file(

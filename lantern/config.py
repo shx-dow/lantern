@@ -8,7 +8,9 @@ import uuid
 # --- Networking ---
 TCP_PORT = 5000  # Default TCP port for file operations
 UDP_PORT = 5001  # UDP port for peer discovery broadcasts
-BUFFER_SIZE = 4096  # Chunk size (bytes) for file transfer
+BUFFER_SIZE = (
+    65536  # Chunk size (bytes) for file transfer (64 KB for better LAN throughput)
+)
 BROADCAST_INTERVAL = 5  # Seconds between UDP discovery beacons
 PEER_TIMEOUT = 15  # Seconds before a peer is considered offline
 
