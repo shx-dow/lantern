@@ -322,6 +322,11 @@ HelpScreen {
 
 /* ── Upload modal ── */
 
+UploadConfirmScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.75);
+}
+
 #upload-dialog {
     width: 60;
     max-width: 75%;

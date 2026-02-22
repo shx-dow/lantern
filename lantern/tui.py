@@ -508,13 +508,62 @@ class LanternApp(App):
 
     def _handle_upload_confirm(self, request: UploadRequest, accepted: bool) -> None:
         if accepted:
-            request.accept()
             self._log(
                 f"[#00ff9f]Accepted[/] upload of "
                 f"[bold]{markup_escape(request.filename)}[/] from "
                 f"[#5ec4ff]{markup_escape(request.sender_ip)}[/]"
             )
-            self.show_notification(f"Receiving {request.filename}...", "info")
+
+            if request.filesize > 1024 * 1024:
+                # Show progress modal for large files
+                progress_screen = TransferProgressScreen(
+                    "Receiving", request.filename, request.filesize
+                )
+                self.push_screen(progress_screen)
+
+                def progress_callback(current: int, total: int) -> None:
+                    self.call_from_thread(progress_screen.update_progress, current)
+
+                def _watch_completion() -> None:
+                    request.transfer_done_event.wait()
+                    if request.transfer_success:
+                        self.call_from_thread(
+                            progress_screen.mark_complete,
+                            True,
+                            f"Complete: {format_size(request.filesize)}",
+                        )
+                        self.call_from_thread(
+                            self.show_notification,
+                            f"Received {request.filename}",
+                            "success",
+                        )
+                    else:
+                        self.call_from_thread(
+                            progress_screen.mark_complete, False, "Transfer incomplete"
+                        )
+                    self.call_from_thread(self._refresh_my_files)
+
+                threading.Thread(target=_watch_completion, daemon=True).start()
+                request.accept(progress_callback=progress_callback)
+            else:
+                # Small file — just accept and notify when done
+                def _notify_done() -> None:
+                    request.transfer_done_event.wait()
+                    if request.transfer_success:
+                        self.call_from_thread(
+                            self.show_notification,
+                            f"Received {request.filename}",
+                            "success",
+                        )
+                        self.call_from_thread(
+                            self._log,
+                            f"[#00ff9f]Received[/] [bold]{markup_escape(request.filename)}[/] "
+                            f"({format_size(request.filesize)})",
+                        )
+                    self.call_from_thread(self._refresh_my_files)
+
+                threading.Thread(target=_notify_done, daemon=True).start()
+                request.accept()
         else:
             request.reject()
             self._log(

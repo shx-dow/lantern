@@ -71,8 +71,14 @@ class UploadRequest:
     # Set by accept() / reject() to unblock the server thread
     decision_event: threading.Event = field(default_factory=threading.Event)
     accepted: bool = False
+    # Set by the TUI after accepting, to receive progress updates during recv
+    progress_callback: callable = None
+    # Set by the server thread once the transfer finishes (success or failure)
+    transfer_done_event: threading.Event = field(default_factory=threading.Event)
+    transfer_success: bool = False
 
-    def accept(self) -> None:
+    def accept(self, progress_callback: callable = None) -> None:
+        self.progress_callback = progress_callback
         self.accepted = True
         self.decision_event.set()
 
@@ -250,11 +256,15 @@ class FileServer:
         send_msg(conn, "OK")
         os.makedirs(SHARED_DIR, exist_ok=True)
         filepath = os.path.join(SHARED_DIR, filename)
-        received = recv_file(conn, filepath, filesize)
+        received = recv_file(conn, filepath, filesize, request.progress_callback)
 
         if received == filesize:
+            request.transfer_success = True
+            request.transfer_done_event.set()
             send_msg(conn, f"OK{SEPARATOR}Received {filename} ({filesize} bytes)")
         else:
+            request.transfer_success = False
+            request.transfer_done_event.set()
             send_msg(
                 conn,
                 f"ERROR{SEPARATOR}Incomplete transfer: got {received}/{filesize} bytes",
