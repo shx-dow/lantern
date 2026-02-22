@@ -130,12 +130,21 @@ def do_download(
         sock.close()
 
 
-def do_upload(host: str, port: int, filepath: str) -> str:
+def do_upload_request(
+    host: str,
+    port: int,
+    filepath: str,
+    progress_callback: callable = None,
+    cancel_event: threading.Event = None,
+) -> str:
     """
-    Upload a local file to a remote peer.
+    Upload a local file to a remote peer using the UPLOAD_REQUEST confirmation flow.
 
+    The receiver's TUI will be prompted to accept or reject before transfer begins.
     Returns a success message string.
-    Raises RuntimeError on failure.
+    Raises RuntimeError on failure or rejection.
+    progress_callback: optional callable(current_bytes, total_bytes) for UI updates
+    cancel_event: optional threading.Event to cancel the transfer
     """
     if not os.path.isfile(filepath):
         raise RuntimeError(f"Local file not found: {filepath}")
@@ -143,10 +152,12 @@ def do_upload(host: str, port: int, filepath: str) -> str:
     filename = os.path.basename(filepath)
     filesize = os.path.getsize(filepath)
 
-    sock = _connect(host, port)
+    # Longer timeout: receiver has up to 60s to accept/reject
+    sock = _connect(host, port, timeout=70)
     try:
-        send_msg(sock, f"UPLOAD{SEPARATOR}{filename}{SEPARATOR}{filesize}")
+        send_msg(sock, f"UPLOAD_REQUEST{SEPARATOR}{filename}{SEPARATOR}{filesize}")
 
+        # Block until receiver accepts, rejects, or times out
         response = recv_msg(sock)
         if response is None or not response.startswith("OK"):
             parts = (response or "").split(SEPARATOR, 1)
@@ -157,11 +168,18 @@ def do_upload(host: str, port: int, filepath: str) -> str:
         sent = 0
         with open(filepath, "rb") as f:
             while sent < filesize:
+                if cancel_event and cancel_event.is_set():
+                    raise RuntimeError("Transfer cancelled")
                 chunk = f.read(BUFFER_SIZE)
                 if not chunk:
                     break
                 sock.sendall(chunk)
                 sent += len(chunk)
+                if progress_callback:
+                    progress_callback(sent, filesize)
+
+        if cancel_event and cancel_event.is_set():
+            raise RuntimeError("Transfer cancelled")
 
         confirm = recv_msg(sock)
         if confirm and confirm.startswith("OK"):
@@ -209,9 +227,9 @@ def download_file(host: str, port: int, filename: str) -> None:
 
 
 def upload_file(host: str, port: int, filepath: str) -> None:
-    """Upload a file and print the result."""
+    """Upload a file and print the result (uses UPLOAD_REQUEST confirmation flow)."""
     try:
-        msg = do_upload(host, port, filepath)
+        msg = do_upload_request(host, port, filepath)
         print(f"  {msg}")
     except RuntimeError as e:
         print(f"  [!] {e}")
