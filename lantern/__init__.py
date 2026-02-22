@@ -22,7 +22,7 @@ from .server import FileServer
 from .client import (
     fetch_file_list,
     do_download,
-    do_upload,
+    do_upload_request,
     format_size,
 )
 from .protocol import send_msg, recv_msg, send_file, recv_file
@@ -40,7 +40,7 @@ __all__ = [
     "FileServer",
     "fetch_file_list",
     "do_download",
-    "do_upload",
+    "do_upload_request",
     "format_size",
     "send_msg",
     "recv_msg",

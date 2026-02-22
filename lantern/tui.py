@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import threading
 from datetime import datetime
+from pathlib import Path
 
 from textual import work
 from textual.app import App, ComposeResult
@@ -30,14 +31,15 @@ from textual.widgets import (
 from textual.screen import ModalScreen, Screen
 from textual.reactive import reactive
 from rich.markup import escape as markup_escape
+from textual_fspicker import FileOpen
 
 from .config import TCP_PORT, SHARED_DIR, PEER_ID
 from .discovery import PeerDiscovery
-from .server import FileServer
+from .server import FileServer, UploadRequest
 from .client import (
     fetch_file_list,
     do_download,
-    do_upload,
+    do_upload_request,
     format_size,
 )
 
@@ -210,35 +212,40 @@ class HelpScreen(ModalScreen):
 
 
 # ==============================================================================
-# Upload Modal
+# Upload Confirmation Modal  (shown on the RECEIVER's side)
 # ==============================================================================
 
 
-class UploadScreen(ModalScreen[str | None]):
-    """Modal dialog to enter a file path for uploading."""
+class UploadConfirmScreen(ModalScreen[bool]):
+    """Ask the user whether to accept an incoming upload request."""
 
-    BINDINGS = [Binding("escape", "cancel", "Cancel")]
+    BINDINGS = [Binding("escape", "reject", "Reject")]
+
+    def __init__(self, request: UploadRequest):
+        super().__init__()
+        self.request = request
 
     def compose(self) -> ComposeResult:
         with Container(id="upload-dialog"):
-            yield Label("Upload File", id="upload-title")
-            yield Input(placeholder="Enter file path...", id="upload-input")
+            yield Label("Incoming Upload Request", id="upload-title")
+            yield Static(
+                f"[bold #5ec4ff]{markup_escape(self.request.sender_ip)}[/] wants to send:\n\n"
+                f"  [bold]{markup_escape(self.request.filename)}[/]  "
+                f"[#718ca1]({format_size(self.request.filesize)})[/]",
+                id="upload-confirm-info",
+            )
             with Horizontal(id="upload-btn-bar"):
-                yield Button("Upload", variant="success", id="upload-confirm")
-                yield Button("Cancel", variant="error", id="upload-cancel")
+                yield Button("Accept", variant="success", id="upload-accept")
+                yield Button("Reject", variant="error", id="upload-reject")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "upload-confirm":
-            inp = self.query_one("#upload-input", Input)
-            self.dismiss(inp.value.strip() or None)
-        elif event.button.id == "upload-cancel":
-            self.dismiss(None)
+        if event.button.id == "upload-accept":
+            self.dismiss(True)
+        elif event.button.id == "upload-reject":
+            self.dismiss(False)
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        self.dismiss(event.value.strip() or None)
-
-    def action_cancel(self) -> None:
-        self.dismiss(None)
+    def action_reject(self) -> None:
+        self.dismiss(False)
 
 
 # ==============================================================================
@@ -374,6 +381,8 @@ class LanternApp(App):
         # Periodic refresh timers
         self.set_interval(3.0, self._poll_peers)
         self.set_interval(10.0, self._refresh_my_files)
+        # Poll for incoming upload requests from other peers
+        self.set_interval(0.5, self._poll_upload_requests)
 
         # Log startup info
         self._log(
@@ -477,6 +486,44 @@ class LanternApp(App):
             self._refresh_remote_files()
 
     # --------------------------------------------------------------------------
+    # Incoming upload request handling
+    # --------------------------------------------------------------------------
+
+    def _poll_upload_requests(self) -> None:
+        """Check for pending upload requests from other peers and prompt the user."""
+        try:
+            request = self.file_server.pending_uploads.get_nowait()
+        except Exception:
+            return
+        self._log(
+            f"[#e0c97f]Incoming upload request[/] from "
+            f"[bold #5ec4ff]{markup_escape(request.sender_ip)}[/]: "
+            f"[bold]{markup_escape(request.filename)}[/] "
+            f"([#718ca1]{format_size(request.filesize)}[/])"
+        )
+        self.push_screen(
+            UploadConfirmScreen(request),
+            callback=lambda accepted: self._handle_upload_confirm(request, accepted),
+        )
+
+    def _handle_upload_confirm(self, request: UploadRequest, accepted: bool) -> None:
+        if accepted:
+            request.accept()
+            self._log(
+                f"[#00ff9f]Accepted[/] upload of "
+                f"[bold]{markup_escape(request.filename)}[/] from "
+                f"[#5ec4ff]{markup_escape(request.sender_ip)}[/]"
+            )
+            self.show_notification(f"Receiving {request.filename}...", "info")
+        else:
+            request.reject()
+            self._log(
+                f"[#e74c3c]Rejected[/] upload of "
+                f"[bold]{markup_escape(request.filename)}[/] from "
+                f"[#5ec4ff]{markup_escape(request.sender_ip)}[/]"
+            )
+
+    # --------------------------------------------------------------------------
     # File listing refresh
     # --------------------------------------------------------------------------
 
@@ -549,28 +596,35 @@ class LanternApp(App):
         if not self.selected_peer:
             self._log("[#e0c97f]Warning:[/] Select a peer first before uploading.")
             return
-        self.push_screen(UploadScreen(), callback=self._handle_upload_result)
+        self.push_screen(
+            FileOpen(
+                str(Path.home()),
+                title="Select File to Upload",
+            ),
+            callback=self._handle_upload_result,
+        )
 
-    def _handle_upload_result(self, filepath: str | None) -> None:
+    def _handle_upload_result(self, filepath: Path | None) -> None:
         if filepath is None:
             return
         peer = self.selected_peer
         if not peer:
             return
-        self._do_upload_async(peer, filepath)
+        self._do_upload_async(peer, str(filepath))
 
     @work(thread=True)
     def _do_upload_async(self, peer: dict, filepath: str) -> None:
         self.app.call_from_thread(
             self._log,
-            f"Uploading [bold]{markup_escape(os.path.basename(filepath))}[/] to "
+            f"Requesting upload of [bold]{markup_escape(os.path.basename(filepath))}[/] to "
             f"[#5ec4ff]{markup_escape(peer['hostname'])}[/]...",
         )
 
         progress_screen = None
+        cancel_event = threading.Event()
         filesize = os.path.getsize(filepath)
+
         if filesize > 1024 * 1024:
-            cancel_event = threading.Event()
 
             def show_progress():
                 nonlocal progress_screen
@@ -581,8 +635,18 @@ class LanternApp(App):
 
             self.app.call_from_thread(show_progress)
 
+        def progress_callback(current: int, total: int):
+            if progress_screen:
+                self.app.call_from_thread(progress_screen.update_progress, current)
+
         try:
-            msg = do_upload(peer["ip"], peer["tcp_port"], filepath)
+            msg = do_upload_request(
+                peer["ip"],
+                peer["tcp_port"],
+                filepath,
+                progress_callback,
+                cancel_event,
+            )
 
             if progress_screen:
                 self.app.call_from_thread(

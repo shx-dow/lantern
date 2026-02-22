@@ -5,18 +5,33 @@ and handles LIST, DOWNLOAD, and UPLOAD commands.
 Each client connection is handled in its own thread.  A semaphore limits
 the number of concurrent handler threads to MAX_CONNECTIONS to prevent
 resource exhaustion from a flood of incoming connections.
+
+Upload flow (with confirmation):
+  1. Sender sends:  UPLOAD_REQUEST|<filename>|<filesize>
+  2. Server places a UploadRequest object on the pending_uploads queue and
+     blocks on request.decision_event (timeout: UPLOAD_REQUEST_TIMEOUT).
+  3. The TUI dequeues the request, shows a confirmation modal, then calls
+     request.accept() or request.reject().
+  4. Server resumes: if accepted it sends OK and receives the file; if
+     rejected (or timed out) it sends ERROR and closes the connection.
+  Legacy UPLOAD command is kept for CLI-mode compatibility.
 """
 
 import os
+import queue
 import re
 import socket
 import threading
+from dataclasses import dataclass, field
 
 from .config import TCP_PORT, SHARED_DIR, SEPARATOR
 from .protocol import send_msg, recv_msg, send_file, recv_file
 
 # Maximum number of simultaneous client connections handled at once.
 MAX_CONNECTIONS = 50
+
+# Seconds the server will wait for the user to accept/reject an upload request.
+UPLOAD_REQUEST_TIMEOUT = 60
 
 
 # Windows reserved device names that must never be used as filenames.
@@ -46,6 +61,26 @@ def _safe_filename(filename: str) -> str:
     return name
 
 
+@dataclass
+class UploadRequest:
+    """Represents a pending upload awaiting user confirmation."""
+
+    sender_ip: str
+    filename: str
+    filesize: int
+    # Set by accept() / reject() to unblock the server thread
+    decision_event: threading.Event = field(default_factory=threading.Event)
+    accepted: bool = False
+
+    def accept(self) -> None:
+        self.accepted = True
+        self.decision_event.set()
+
+    def reject(self) -> None:
+        self.accepted = False
+        self.decision_event.set()
+
+
 class FileServer:
     """Multithreaded TCP server for file operations."""
 
@@ -54,6 +89,8 @@ class FileServer:
         self._running = False
         self._sock: socket.socket | None = None
         self._semaphore = threading.Semaphore(MAX_CONNECTIONS)
+        # Queue of UploadRequest objects waiting for TUI confirmation.
+        self.pending_uploads: queue.Queue[UploadRequest] = queue.Queue()
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -126,7 +163,10 @@ class FileServer:
                 self._handle_list(conn)
             elif cmd == "DOWNLOAD" and len(parts) >= 2:
                 self._handle_download(conn, parts[1])
+            elif cmd == "UPLOAD_REQUEST" and len(parts) >= 3:
+                self._handle_upload_request(conn, addr[0], parts[1], parts[2])
             elif cmd == "UPLOAD" and len(parts) >= 3:
+                # Legacy: used by CLI mode (no confirmation)
                 self._handle_upload(conn, parts[1], parts[2])
             else:
                 send_msg(conn, f"ERROR{SEPARATOR}Unknown command")
@@ -171,10 +211,59 @@ class FileServer:
         send_msg(conn, f"OK{SEPARATOR}{filesize}")
         send_file(conn, filepath)
 
+    def _handle_upload_request(
+        self,
+        conn: socket.socket,
+        sender_ip: str,
+        filename: str,
+        filesize_str: str,
+    ) -> None:
+        """Handle a TUI upload: pause and wait for user confirmation."""
+        filename = _safe_filename(filename)
+
+        try:
+            filesize = int(filesize_str)
+        except ValueError:
+            send_msg(conn, f"ERROR{SEPARATOR}Invalid file size")
+            return
+
+        if filesize < 0:
+            send_msg(conn, f"ERROR{SEPARATOR}File size must not be negative")
+            return
+
+        # Build the request and enqueue it for the TUI to handle.
+        request = UploadRequest(
+            sender_ip=sender_ip,
+            filename=filename,
+            filesize=filesize,
+        )
+        self.pending_uploads.put(request)
+
+        # Block this thread until the user decides (or timeout).
+        decided = request.decision_event.wait(timeout=UPLOAD_REQUEST_TIMEOUT)
+
+        if not decided or not request.accepted:
+            send_msg(conn, f"ERROR{SEPARATOR}Upload declined")
+            return
+
+        # User accepted — proceed exactly like a normal upload.
+        send_msg(conn, "OK")
+        os.makedirs(SHARED_DIR, exist_ok=True)
+        filepath = os.path.join(SHARED_DIR, filename)
+        received = recv_file(conn, filepath, filesize)
+
+        if received == filesize:
+            send_msg(conn, f"OK{SEPARATOR}Received {filename} ({filesize} bytes)")
+        else:
+            send_msg(
+                conn,
+                f"ERROR{SEPARATOR}Incomplete transfer: got {received}/{filesize} bytes",
+            )
+
     def _handle_upload(
         self, conn: socket.socket, filename: str, filesize_str: str
     ) -> None:
-        """Receive a file from the peer and save it."""
+        """Receive a file from the peer and save it (legacy CLI, no confirmation)."""
         filename = _safe_filename(filename)
         os.makedirs(SHARED_DIR, exist_ok=True)
         filepath = os.path.join(SHARED_DIR, filename)
