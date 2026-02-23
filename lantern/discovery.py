@@ -12,12 +12,12 @@ The hostname field is last so that colons inside a hostname (valid on some
 systems) do not corrupt parsing — the first three fields are always fixed.
 """
 
+import platform
 import socket
 import threading
 import time
-import platform
 
-from .config import UDP_PORT, TCP_PORT, BROADCAST_INTERVAL, PEER_TIMEOUT, PEER_ID
+from .config import BROADCAST_INTERVAL, PEER_ID, PEER_TIMEOUT, TCP_PORT, UDP_PORT
 
 try:
     import psutil

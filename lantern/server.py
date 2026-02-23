@@ -24,8 +24,10 @@ import socket
 import threading
 from dataclasses import dataclass, field
 
-from .config import TCP_PORT, SHARED_DIR, SEPARATOR
-from .protocol import send_msg, recv_msg, send_file, recv_file
+from typing_extensions import Callable
+
+from .config import SEPARATOR, SHARED_DIR, TCP_PORT
+from .protocol import recv_file, recv_msg, send_file, send_msg
 
 # Maximum number of simultaneous client connections handled at once.
 MAX_CONNECTIONS = 50
@@ -72,12 +74,14 @@ class UploadRequest:
     decision_event: threading.Event = field(default_factory=threading.Event)
     accepted: bool = False
     # Set by the TUI after accepting, to receive progress updates during recv
-    progress_callback: callable = None
+    progress_callback: Callable[[int, int], None] | None = None
     # Set by the server thread once the transfer finishes (success or failure)
     transfer_done_event: threading.Event = field(default_factory=threading.Event)
     transfer_success: bool = False
 
-    def accept(self, progress_callback: callable = None) -> None:
+    def accept(
+        self, progress_callback: Callable[[int, int], None] | None = None
+    ) -> None:
         self.progress_callback = progress_callback
         self.accepted = True
         self.decision_event.set()

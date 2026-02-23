@@ -11,38 +11,37 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
+from rich.markup import escape as markup_escape
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical, Container
-from textual.widgets import (
-    Header,
-    Footer,
-    Static,
-    DataTable,
-    RichLog,
-    Input,
-    Button,
-    Label,
-    ListView,
-    ListItem,
-    ProgressBar,
-)
-from textual.screen import ModalScreen, Screen
+from textual.containers import Container, Horizontal, Vertical
 from textual.reactive import reactive
-from rich.markup import escape as markup_escape
+from textual.screen import ModalScreen, Screen
+from textual.widgets import (
+    Button,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    ListItem,
+    ListView,
+    ProgressBar,
+    RichLog,
+    Static,
+)
 from textual_fspicker import FileOpen
 
-from .config import TCP_PORT, SHARED_DIR, PEER_ID
-from .discovery import PeerDiscovery
-from .server import FileServer, UploadRequest
 from .client import (
-    fetch_file_list,
     do_download,
     do_upload_request,
+    fetch_file_list,
     format_size,
 )
-
+from .config import PEER_ID, SHARED_DIR, TCP_PORT
+from .discovery import PeerDiscovery
+from .server import FileServer, UploadRequest
 
 # Load CSS from external file
 CSS_FILE = os.path.join(os.path.dirname(__file__), "styles", "lantern.css")
@@ -63,7 +62,7 @@ class TransferProgressScreen(ModalScreen):
         operation: str,
         filename: str,
         total_size: int,
-        cancel_event: threading.Event = None,
+        cancel_event: threading.Event | None = None,
     ):
         super().__init__()
         self.operation = operation
@@ -100,7 +99,7 @@ class TransferProgressScreen(ModalScreen):
         except Exception:
             pass
 
-    def mark_complete(self, success: bool, message: str = None) -> None:
+    def mark_complete(self, success: bool, message: str | None = None) -> None:
         """Mark transfer as complete and update UI."""
         self._completed = True
         try:
@@ -503,7 +502,7 @@ class LanternApp(App):
         )
         self.push_screen(
             UploadConfirmScreen(request),
-            callback=lambda accepted: self._handle_upload_confirm(request, accepted),
+            callback=lambda accepted: self._handle_upload_confirm(request, accepted or False),
         )
 
     def _handle_upload_confirm(self, request: UploadRequest, accepted: bool) -> None:
@@ -756,8 +755,9 @@ class LanternApp(App):
         self._do_download_async(peer, filename, filesize)
 
     @work(thread=True)
+    @work(thread=True)
     def _do_download_async(
-        self, peer: dict, filename: str, filesize: int = None
+        self, peer: dict, filename: str, filesize: int | None = None
     ) -> None:
         self.app.call_from_thread(
             self._log,
@@ -779,7 +779,7 @@ class LanternApp(App):
 
             self.app.call_from_thread(show_progress)
 
-        def progress_callback(current: int, total: int):
+        def progress_callback(current: int, total: int) -> None:
             if progress_screen:
                 self.app.call_from_thread(progress_screen.update_progress, current)
 

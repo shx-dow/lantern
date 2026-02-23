@@ -2,17 +2,10 @@
 Tests for protocol.py — message framing and file transfer helpers.
 """
 
-import io
 import socket
-import struct
 import threading
-import tempfile
-import os
 
-import pytest
-
-from lantern.protocol import send_msg, recv_msg, send_file, recv_file, _recv_exactly
-
+from lantern.protocol import _recv_exactly, recv_file, recv_msg, send_file, send_msg
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -152,6 +145,7 @@ class TestFileTransfer:
             t.start()
 
             size_msg = recv_msg(server)
+            assert size_msg is not None
             filesize = int(size_msg)
             received = recv_file(server, str(dst), filesize)
             t.join()
@@ -177,6 +171,7 @@ class TestFileTransfer:
             t.start()
 
             size_msg = recv_msg(server)
+            assert size_msg is not None
             filesize = int(size_msg)
             received = recv_file(server, str(dst), filesize)
             t.join()
@@ -208,6 +203,7 @@ class TestFileTransfer:
             t.start()
 
             size_msg = recv_msg(server)
+            assert size_msg is not None
             filesize = int(size_msg)
             recv_file(server, str(dst), filesize, progress_callback=progress)
             t.join()
@@ -237,6 +233,7 @@ class TestFileTransfer:
             t.start()
 
             size_msg = recv_msg(server)
+            assert size_msg is not None
             filesize = int(size_msg)
             received = recv_file(server, str(dst), filesize, cancel_event=cancel)
             t.join()

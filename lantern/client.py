@@ -14,8 +14,10 @@ import os
 import socket
 import threading
 
-from .config import SEPARATOR, BUFFER_SIZE, SHARED_DIR
-from .protocol import send_msg, recv_msg, recv_file
+from typing_extensions import Callable
+
+from .config import BUFFER_SIZE, SEPARATOR, SHARED_DIR
+from .protocol import recv_file, recv_msg, send_msg
 
 
 def _connect(host: str, port: int, timeout: float = 10) -> socket.socket:
@@ -80,8 +82,8 @@ def do_download(
     host: str,
     port: int,
     filename: str,
-    progress_callback: callable = None,
-    cancel_event: threading.Event = None,
+    progress_callback: Callable[[int, int], None] | None = None,
+    cancel_event: threading.Event | None = None,
 ) -> tuple[str, int]:
     """
     Download a file from a remote peer.
@@ -120,7 +122,7 @@ def do_download(
                 f"Filename is invalid or empty after sanitization: {filename!r}"
             )
         dest = os.path.join(SHARED_DIR, safe_name)
-        received = recv_file(sock, dest, filesize, progress_callback, cancel_event)
+        received = recv_file(sock, dest, filesize, progress_callback, cancel_event or threading.Event())
 
         if cancel_event and cancel_event.is_set():
             raise RuntimeError("Transfer cancelled")
@@ -134,8 +136,8 @@ def do_upload_request(
     host: str,
     port: int,
     filepath: str,
-    progress_callback: callable = None,
-    cancel_event: threading.Event = None,
+    progress_callback: Callable[[int, int], None] | None = None,
+    cancel_event: threading.Event | None = None,
 ) -> str:
     """
     Upload a local file to a remote peer using the UPLOAD_REQUEST confirmation flow.

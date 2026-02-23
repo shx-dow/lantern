@@ -27,8 +27,6 @@ shared_files/
 # Logs
 *.log
 
-extras/
-
 # Build artifacts
 dist/
 build/

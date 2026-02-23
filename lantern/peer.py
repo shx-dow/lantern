@@ -12,15 +12,14 @@ Usage:
 
 import argparse
 import os
-import sys
 
-from .config import TCP_PORT, SHARED_DIR, PEER_ID
+from .client import download_file, list_files, upload_file
+from .config import PEER_ID, SHARED_DIR, TCP_PORT
 from .discovery import PeerDiscovery
 from .server import FileServer
-from .client import list_files, download_file, upload_file
 
 
-def _format_size(size_bytes: int) -> str:
+def _format_size(size_bytes: float) -> str:
     for unit in ("B", "KB", "MB", "GB"):
         if size_bytes < 1024:
             return f"{size_bytes:.1f} {unit}"

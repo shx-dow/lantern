@@ -2,8 +2,6 @@
 Tests for client.py — format_size and core API helpers.
 """
 
-import pytest
-
 from lantern.client import format_size
 
 

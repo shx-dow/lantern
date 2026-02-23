@@ -7,9 +7,11 @@ knows exactly how many bytes to read for each message.
     [ 4 bytes: length ][ N bytes: payload ]
 """
 
-import struct
 import os
+import struct
 import threading
+
+from typing_extensions import Callable
 
 from .config import BUFFER_SIZE
 
@@ -81,8 +83,8 @@ def recv_file(
     sock,
     filepath: str,
     filesize: int,
-    progress_callback: callable = None,
-    cancel_event: threading.Event = None,
+    progress_callback: Callable[[int, int], None] | None = None,
+    cancel_event: threading.Event | None = None,
 ) -> int:
     """
     Receive a file: read filesize raw bytes and write them to *filepath*.
