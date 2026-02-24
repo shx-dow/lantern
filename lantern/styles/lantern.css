@@ -503,6 +503,97 @@ LoadingScreen {
     height: 1;
 }
 
+/* ── File picker (textual-fspicker overrides) ── */
+
+FileSystemPickerScreen {
+    align: center middle;
+    background: rgba(5, 10, 5, 0.85);
+}
+
+FileSystemPickerScreen Dialog {
+    background: #0f1a12;
+    border: solid #2a4030;
+    border-title-color: #dde8d0;
+    border-title-background: #0f1a12;
+    border-subtitle-color: #c26068;
+    border-subtitle-background: #2e1c1e;
+}
+
+FileSystemPickerScreen OptionList,
+FileSystemPickerScreen OptionList:focus {
+    background: #0f1a12;
+    scrollbar-size: 1 1;
+    scrollbar-color: #1c2b1e;
+    scrollbar-color-hover: #5dba6e;
+    scrollbar-color-active: #5dba6e;
+}
+
+FileSystemPickerScreen OptionList > .option-list--option-highlighted {
+    background: #1a3d20;
+    color: #dde8d0;
+    text-style: bold;
+}
+
+FileSystemPickerScreen OptionList > .option-list--option-hover {
+    background: #1e3323;
+    color: #dde8d0;
+}
+
+FileSystemPickerScreen Button {
+    background: #1c2b1e;
+    color: #8aaa88;
+    text-style: bold;
+    border-top: tall #2a4030;
+    border-bottom: tall #0a0f0a;
+}
+
+FileSystemPickerScreen Button:hover {
+    background: #1a3d20;
+    color: #5dba6e;
+    border-top: tall #3a5840;
+}
+
+FileSystemPickerScreen Button:focus {
+    background: #1a3d20;
+    color: #dde8d0;
+    border-top: tall #3a5840;
+}
+
+FileSystemPickerScreen DriveNavigation,
+FileSystemPickerScreen DriveNavigation:focus {
+    border: blank;
+    border-right: solid #2a4030;
+    background: #0f1a12;
+}
+
+FileSystemPickerScreen DriveNavigation > .option-list--option-highlighted {
+    background: #1a3d20;
+    color: #dde8d0;
+    text-style: bold;
+}
+
+FileSystemPickerScreen CurrentDirectory {
+    color: #7090a0;
+    border-bottom: solid #2a4030;
+    background: #162118;
+}
+
+FileSystemPickerScreen DirectoryNavigation > .directory-navigation--hidden {
+    color: #506050;
+    text-style: italic;
+}
+
+FileSystemPickerScreen Input {
+    background: #0f1a12;
+    color: #dde8d0;
+    border: tall #1c2b1e;
+}
+
+FileSystemPickerScreen Input:focus {
+    background: #162118;
+    border: tall #2a4030;
+}
+
 /* ── Notification toast ── */
 
 #notification-toast {
@@ -897,4 +988,93 @@ LoadingScreen {
     background: #dfc8c8;
     border: solid #c8a8a8;
     color: #7a2020;
+}
+
+/* ── File picker (textual-fspicker overrides — Everforest Light) ── */
+
+.app-light FileSystemPickerScreen {
+    align: center middle;
+    background: rgba(100, 90, 75, 0.55);
+}
+
+.app-light FileSystemPickerScreen Dialog {
+    background: #ede8d9;
+    border: solid #bfb9a8;
+    border-title-color: #5c5143;
+    border-title-background: #ede8d9;
+    border-subtitle-color: #7a2020;
+    border-subtitle-background: #dfc8c8;
+}
+
+.app-light FileSystemPickerScreen OptionList,
+.app-light FileSystemPickerScreen OptionList:focus {
+    background: #ede8d9;
+    scrollbar-color: #a8a090;
+    scrollbar-color-hover: #5a8a3a;
+    scrollbar-color-active: #5a8a3a;
+}
+
+.app-light FileSystemPickerScreen OptionList > .option-list--option-highlighted {
+    background: #c8dfc0;
+    color: #3a3028;
+    text-style: bold;
+}
+
+.app-light FileSystemPickerScreen OptionList > .option-list--option-hover {
+    background: #ddd8c8;
+    color: #5c5143;
+}
+
+.app-light FileSystemPickerScreen Button {
+    background: #d8d1bf;
+    color: #5c5143;
+    text-style: bold;
+    border-top: tall #e4dece;
+    border-bottom: tall #bfb9a8;
+}
+
+.app-light FileSystemPickerScreen Button:hover {
+    background: #c8dfc0;
+    color: #3a5c2a;
+    border-top: tall #d8f0d0;
+}
+
+.app-light FileSystemPickerScreen Button:focus {
+    background: #c8dfc0;
+    color: #3a5c2a;
+}
+
+.app-light FileSystemPickerScreen DriveNavigation,
+.app-light FileSystemPickerScreen DriveNavigation:focus {
+    border: blank;
+    border-right: solid #bfb9a8;
+    background: #ede8d9;
+}
+
+.app-light FileSystemPickerScreen DriveNavigation > .option-list--option-highlighted {
+    background: #c8dfc0;
+    color: #3a3028;
+    text-style: bold;
+}
+
+.app-light FileSystemPickerScreen CurrentDirectory {
+    color: #4a6878;
+    border-bottom: solid #bfb9a8;
+    background: #e4dece;
+}
+
+.app-light FileSystemPickerScreen DirectoryNavigation > .directory-navigation--hidden {
+    color: #aea090;
+    text-style: italic;
+}
+
+.app-light FileSystemPickerScreen Input {
+    background: #f3ede3;
+    color: #5c5143;
+    border: tall #d8d1bf;
+}
+
+.app-light FileSystemPickerScreen Input:focus {
+    background: #faf6f0;
+    border: tall #bfb9a8;
 }
