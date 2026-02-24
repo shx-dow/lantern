@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.2] - 2026-02-24
+
+### Changed
+- TUI now applies a cohesive theme in dark mode — deep
+  forest-green backgrounds (`#0f1a12`), bright jungle green accent
+  (`#5dba6e`), sage-cream text (`#dde8d0`), and green-tinted borders
+  throughout. Replaces the previous grey-tinted Textual defaults.
+- Light mode switched to warm parchment tones
+  (`#f3ede3`, `#ede8d9`), muted sage greens, and olive accents. Both themes
+  share the same forest character at opposite ends of the brightness range.
+- `textual-fspicker` file browser dialog now inherits the active theme
+  instead of showing the default Textual palette. Dialog box, file list,
+  drive panel, path label, filename input, and buttons are all overridden
+  for both Jungle Dark and Everforest Light.
+
+---
+
 ## [1.1.1] - 2026-02-22
 
 ### Security
