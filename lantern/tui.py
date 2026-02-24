@@ -179,28 +179,44 @@ class HelpScreen(ModalScreen):
 
     BINDINGS = [Binding("escape", "dismiss", "Close")]
 
+    def __init__(self, dark: bool = True):
+        super().__init__()
+        self._dark = dark
+
     def compose(self) -> ComposeResult:
+        # Pick colors that are legible in the active theme.
+        # Dark:  aqua heading, yellow keybinds, blue-grey commands
+        # Light: teal heading, dark-olive keybinds, slate commands
+        if self._dark:
+            heading = "#5dba6e"
+            keybind = "#c4944a"
+            cmd = "#7090a0"
+        else:
+            heading = "#3d8b7d"
+            keybind = "#7a5c00"
+            cmd = "#4a6878"
+
         with Container(id="help-dialog"):
             yield Label("LANTERN  —  Help", id="help-title")
             yield Static(
-                "[bold #5ec4ff]Keybindings[/]\n"
+                f"[bold {heading}]Keybindings[/]\n"
                 "\n"
-                "  [#e0c97f]F1[/]          Show this help\n"
-                "  [#e0c97f]F5[/]          Refresh file list from selected peer\n"
-                "  [#e0c97f]t[/]           Toggle theme (Lantern Dark / Light)\n"
-                "  [#e0c97f]u[/]           Upload a file to the selected peer\n"
-                "  [#e0c97f]d[/]           Download the selected file\n"
-                "  [#e0c97f]Tab[/]         Cycle focus between panels\n"
-                "  [#e0c97f]q[/]           Quit Lantern\n"
+                f"  [{keybind}]F1[/]          Show this help\n"
+                f"  [{keybind}]F5[/]          Refresh file list from selected peer\n"
+                f"  [{keybind}]t[/]           Toggle theme (Lantern Dark / Light)\n"
+                f"  [{keybind}]u[/]           Upload a file to the selected peer\n"
+                f"  [{keybind}]d[/]           Download the selected file\n"
+                f"  [{keybind}]Tab[/]         Cycle focus between panels\n"
+                f"  [{keybind}]q[/]           Quit Lantern\n"
                 "\n"
-                "[bold #5ec4ff]Command Input[/]\n"
+                f"[bold {heading}]Command Input[/]\n"
                 "\n"
                 "  Type commands in the bottom bar:\n"
-                "  [#718ca1]list <host[:port]>[/]               List remote files\n"
-                "  [#718ca1]download <host[:port]> <file>[/]    Download a file\n"
-                "  [#718ca1]upload <host[:port]> <path>[/]      Upload a file\n"
-                "  [#718ca1]peers[/]                            Show discovered peers\n"
-                "  [#718ca1]myfiles[/]                          Refresh local files\n",
+                f"  [{cmd}]list <host[:port]>[/]               List remote files\n"
+                f"  [{cmd}]download <host[:port]> <file>[/]    Download a file\n"
+                f"  [{cmd}]upload <host[:port]> <path>[/]      Upload a file\n"
+                f"  [{cmd}]peers[/]                            Show discovered peers\n"
+                f"  [{cmd}]myfiles[/]                          Refresh local files\n",
                 id="help-content",
             )
             yield Button("Close  (Esc)", id="help-close-btn")
@@ -228,9 +244,9 @@ class UploadConfirmScreen(ModalScreen[bool]):
         with Container(id="upload-dialog"):
             yield Label("Incoming Upload Request", id="upload-title")
             yield Static(
-                f"[bold #5ec4ff]{markup_escape(self.request.sender_ip)}[/] wants to send:\n\n"
+                f"[bold #5dba6e]{markup_escape(self.request.sender_ip)}[/] wants to send:\n\n"
                 f"  [bold]{markup_escape(self.request.filename)}[/]  "
-                f"[#718ca1]({format_size(self.request.filesize)})[/]",
+                f"[#7090a0]({format_size(self.request.filesize)})[/]",
                 id="upload-confirm-info",
             )
             with Horizontal(id="upload-btn-bar"):
@@ -263,10 +279,10 @@ class LoadingScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Static(
-            "[bold #EBD5AB] _             _                [/]\n"
-            "[bold #EBD5AB]| |   __ _ _ _| |_ ___ _ _ _ _  [/]\n"
-            "[bold #EBD5AB]| |__/ _` | ' \\  _/ -_) '_| ' \\ [/]\n"
-            "[bold #EBD5AB]|____\\__,_|_||_\\__\\___|_| |_||_|[/]",
+            "[bold #5dba6e] _             _                [/]\n"
+            "[bold #5dba6e]| |   __ _ _ _| |_ ___ _ _ _ _  [/]\n"
+            "[bold #5dba6e]| |__/ _` | ' \\  _/ -_) '_| ' \\ [/]\n"
+            "[bold #5dba6e]|____\\__,_|_||_\\__\\___|_| |_||_|[/]",
             id="loading-logo",
         )
 
@@ -385,9 +401,9 @@ class LanternApp(App):
 
         # Log startup info
         self._log(
-            f"Lantern started  [bold #5ec4ff]peer_id={PEER_ID}[/]  tcp_port={self.tcp_port}"
+            f"Lantern started  [bold #5dba6e]peer_id={PEER_ID}[/]  tcp_port={self.tcp_port}"
         )
-        self._log(f"Shared directory: [#718ca1]{SHARED_DIR}[/]")
+        self._log(f"Shared directory: [#7090a0]{SHARED_DIR}[/]")
         self._log("Discovering peers on the network...")
 
         # Show loading screen first - logs will appear after it's dismissed
@@ -413,7 +429,7 @@ class LanternApp(App):
     def _log(self, message: str) -> None:
         log_view = self.query_one("#log-view", RichLog)
         ts = datetime.now().strftime("%H:%M:%S")
-        log_view.write(f"[#41505e]{ts}[/]  {message}")
+        log_view.write(f"[#506050]{ts}[/]  {message}")
 
     def show_notification(self, message: str, notification_type: str = "info") -> None:
         """Show a toast notification."""
@@ -446,21 +462,21 @@ class LanternApp(App):
         for p in peers:
             if p["peer_id"] not in existing_ids:
                 self._log(
-                    f"[#00ff9f]Discovered[/] peer "
-                    f"[bold #5ec4ff]{markup_escape(p['hostname'])}[/] "
-                    f"([#718ca1]{markup_escape(p['ip'])}:{p['tcp_port']}[/])"
+                    f"[#5dba6e]Discovered[/] peer "
+                    f"[bold #5dba6e]{markup_escape(p['hostname'])}[/] "
+                    f"([#7090a0]{markup_escape(p['ip'])}:{p['tcp_port']}[/])"
                 )
 
         # Log lost peers
         for pid in existing_ids - current_ids:
-            self._log(f"[#e74c3c]Lost[/] peer [#718ca1]{pid}[/]")
+            self._log(f"[#c26068]Lost[/] peer [#7090a0]{pid}[/]")
 
         # Rebuild the list
         peer_list.clear()
         for p in peers:
             label = Static(
-                f"[#00ff9f]●[/] [bold #5ec4ff]{markup_escape(p['hostname'])}[/]\n"
-                f"  [#718ca1]{markup_escape(p['ip'])}:{p['tcp_port']}[/]",
+                f"[#5dba6e]●[/] [bold #5dba6e]{markup_escape(p['hostname'])}[/]\n"
+                f"  [#7090a0]{markup_escape(p['ip'])}:{p['tcp_port']}[/]",
                 classes="peer-entry",
             )
             item = ListItem(label)
@@ -479,8 +495,8 @@ class LanternApp(App):
             self.selected_peer = peer
             header_label = self.query_one("#files-header-text", Label)
             header_label.update(
-                f"FILES ON: [bold #5ec4ff]{markup_escape(peer['hostname'])}[/]  "
-                f"([#718ca1]{markup_escape(peer['ip'])}:{peer['tcp_port']}[/])"
+                f"FILES ON: [bold #5dba6e]{markup_escape(peer['hostname'])}[/]  "
+                f"([#7090a0]{markup_escape(peer['ip'])}:{peer['tcp_port']}[/])"
             )
             self._refresh_remote_files()
 
@@ -495,22 +511,24 @@ class LanternApp(App):
         except Exception:
             return
         self._log(
-            f"[#e0c97f]Incoming upload request[/] from "
-            f"[bold #5ec4ff]{markup_escape(request.sender_ip)}[/]: "
+            f"[#c4944a]Incoming upload request[/] from "
+            f"[bold #5dba6e]{markup_escape(request.sender_ip)}[/]: "
             f"[bold]{markup_escape(request.filename)}[/] "
-            f"([#718ca1]{format_size(request.filesize)}[/])"
+            f"([#7090a0]{format_size(request.filesize)}[/])"
         )
         self.push_screen(
             UploadConfirmScreen(request),
-            callback=lambda accepted: self._handle_upload_confirm(request, accepted or False),
+            callback=lambda accepted: self._handle_upload_confirm(
+                request, accepted or False
+            ),
         )
 
     def _handle_upload_confirm(self, request: UploadRequest, accepted: bool) -> None:
         if accepted:
             self._log(
-                f"[#00ff9f]Accepted[/] upload of "
+                f"[#5dba6e]Accepted[/] upload of "
                 f"[bold]{markup_escape(request.filename)}[/] from "
-                f"[#5ec4ff]{markup_escape(request.sender_ip)}[/]"
+                f"[#5dba6e]{markup_escape(request.sender_ip)}[/]"
             )
 
             if request.filesize > 1024 * 1024:
@@ -556,7 +574,7 @@ class LanternApp(App):
                         )
                         self.call_from_thread(
                             self._log,
-                            f"[#00ff9f]Received[/] [bold]{markup_escape(request.filename)}[/] "
+                            f"[#5dba6e]Received[/] [bold]{markup_escape(request.filename)}[/] "
                             f"({format_size(request.filesize)})",
                         )
                     self.call_from_thread(self._refresh_my_files)
@@ -566,9 +584,9 @@ class LanternApp(App):
         else:
             request.reject()
             self._log(
-                f"[#e74c3c]Rejected[/] upload of "
+                f"[#c26068]Rejected[/] upload of "
                 f"[bold]{markup_escape(request.filename)}[/] from "
-                f"[#5ec4ff]{markup_escape(request.sender_ip)}[/]"
+                f"[#5dba6e]{markup_escape(request.sender_ip)}[/]"
             )
 
     # --------------------------------------------------------------------------
@@ -597,8 +615,8 @@ class LanternApp(App):
         except Exception as e:
             self.app.call_from_thread(
                 self._log,
-                f"[#e74c3c]Error[/] listing files from "
-                f"[#5ec4ff]{markup_escape(peer['hostname'])}[/]: {markup_escape(str(e))}",
+                f"[#c26068]Error[/] listing files from "
+                f"[#5dba6e]{markup_escape(peer['hostname'])}[/]: {markup_escape(str(e))}",
             )
 
     def _update_remote_table(self, files: list[dict]) -> None:
@@ -613,18 +631,18 @@ class LanternApp(App):
     # --------------------------------------------------------------------------
 
     def action_show_help(self) -> None:
-        self.push_screen(HelpScreen())
+        self.push_screen(HelpScreen(dark=self.dark_theme))
 
     def action_toggle_app_theme(self) -> None:
         self.dark_theme = not self.dark_theme
         if self.dark_theme:
             self.theme = "textual-dark"
             self.remove_class("app-light")
-            self._log("[#e0c97f]Theme:[/] Lantern Dark")
+            self._log("[#c4944a]Theme:[/] Lantern Dark")
         else:
             self.theme = "textual-light"
             self.add_class("app-light")
-            self._log("[#e0c97f]Theme:[/] Lantern Light")
+            self._log("[#7a5c00]Theme:[/] Lantern Light")
 
     def action_quit_app(self) -> None:
         self._log("Shutting down...")
@@ -635,14 +653,14 @@ class LanternApp(App):
         if self.selected_peer:
             self._refresh_remote_files()
             self._log(
-                f"Refreshing files from [#5ec4ff]{markup_escape(self.selected_peer['hostname'])}[/]..."
+                f"Refreshing files from [#5dba6e]{markup_escape(self.selected_peer['hostname'])}[/]..."
             )
         else:
             self._log("No peer selected — refreshed local files only.")
 
     def action_upload_file(self) -> None:
         if not self.selected_peer:
-            self._log("[#e0c97f]Warning:[/] Select a peer first before uploading.")
+            self._log("[#c4944a]Warning:[/] Select a peer first before uploading.")
             return
         self.push_screen(
             FileOpen(
@@ -665,7 +683,7 @@ class LanternApp(App):
         self.app.call_from_thread(
             self._log,
             f"Requesting upload of [bold]{markup_escape(os.path.basename(filepath))}[/] to "
-            f"[#5ec4ff]{markup_escape(peer['hostname'])}[/]...",
+            f"[#5dba6e]{markup_escape(peer['hostname'])}[/]...",
         )
 
         progress_screen = None
@@ -705,7 +723,7 @@ class LanternApp(App):
 
             self.app.call_from_thread(
                 self._log,
-                f"[#00ff9f]Success:[/] {msg}",
+                f"[#5dba6e]Success:[/] {msg}",
             )
             self.app.call_from_thread(
                 self.show_notification,
@@ -719,7 +737,7 @@ class LanternApp(App):
                 self.app.call_from_thread(progress_screen.mark_complete, False, str(e))
             self.app.call_from_thread(
                 self._log,
-                f"[#e74c3c]Upload failed:[/] {e}",
+                f"[#c26068]Upload failed:[/] {e}",
             )
             self.app.call_from_thread(
                 self.show_notification,
@@ -729,12 +747,12 @@ class LanternApp(App):
 
     def action_download_file(self) -> None:
         if not self.selected_peer:
-            self._log("[#e0c97f]Warning:[/] Select a peer first.")
+            self._log("[#c4944a]Warning:[/] Select a peer first.")
             return
 
         table = self.query_one("#remote-files-table", DataTable)
         if table.row_count == 0:
-            self._log("[#e0c97f]Warning:[/] No files to download.")
+            self._log("[#c4944a]Warning:[/] No files to download.")
             return
 
         try:
@@ -742,7 +760,7 @@ class LanternApp(App):
             row_data = table.get_row(row_key)
             filename = row_data[0]
         except Exception:
-            self._log("[#e0c97f]Warning:[/] Select a file in the table first.")
+            self._log("[#c4944a]Warning:[/] Select a file in the table first.")
             return
 
         filesize = None
@@ -755,13 +773,12 @@ class LanternApp(App):
         self._do_download_async(peer, filename, filesize)
 
     @work(thread=True)
-    @work(thread=True)
     def _do_download_async(
         self, peer: dict, filename: str, filesize: int | None = None
     ) -> None:
         self.app.call_from_thread(
             self._log,
-            f"Downloading [bold]{markup_escape(filename)}[/] from [#5ec4ff]{markup_escape(peer['hostname'])}[/]...",
+            f"Downloading [bold]{markup_escape(filename)}[/] from [#5dba6e]{markup_escape(peer['hostname'])}[/]...",
         )
 
         progress_screen = None
@@ -799,8 +816,8 @@ class LanternApp(App):
                 )
             self.app.call_from_thread(
                 self._log,
-                f"[#00ff9f]Downloaded[/] {filename} "
-                f"({format_size(received)}) -> [#718ca1]{dest}[/]",
+                f"[#5dba6e]Downloaded[/] {filename} "
+                f"({format_size(received)}) -> [#7090a0]{dest}[/]",
             )
             self.app.call_from_thread(
                 self.show_notification,
@@ -813,7 +830,7 @@ class LanternApp(App):
                 self.app.call_from_thread(progress_screen.mark_complete, False, str(e))
             self.app.call_from_thread(
                 self._log,
-                f"[#e74c3c]Download failed:[/] {e}",
+                f"[#c26068]Download failed:[/] {e}",
             )
             self.app.call_from_thread(
                 self.show_notification,
@@ -881,7 +898,7 @@ class LanternApp(App):
         elif cmd in ("quit", "exit"):
             self.action_quit_app()
         else:
-            self._log(f"[#e0c97f]Unknown command:[/] {raw}  (press F1 for help)")
+            self._log(f"[#c4944a]Unknown command:[/] {raw}  (press F1 for help)")
 
     def _parse_target(self, target: str) -> tuple[str, int] | None:
         """Parse 'host:port'. Returns None and logs an error if port is invalid."""
@@ -891,7 +908,7 @@ class LanternApp(App):
                 return host, int(port_str)
             except ValueError:
                 self._log(
-                    f"[#e74c3c]Error:[/] Invalid port '{port_str}' — must be an integer."
+                    f"[#c26068]Error:[/] Invalid port '{port_str}' — must be an integer."
                 )
                 return None
         return target, self.tcp_port
@@ -903,8 +920,8 @@ class LanternApp(App):
         else:
             for p in peers:
                 self._log(
-                    f"  [#00ff9f]●[/] [bold #5ec4ff]{markup_escape(p['hostname'])}[/]  "
-                    f"[#718ca1]{markup_escape(p['ip'])}:{p['tcp_port']}[/]"
+                    f"  [#5dba6e]●[/] [bold #5dba6e]{markup_escape(p['hostname'])}[/]  "
+                    f"[#7090a0]{markup_escape(p['ip'])}:{p['tcp_port']}[/]"
                 )
 
     @work(thread=True)
@@ -913,18 +930,18 @@ class LanternApp(App):
             files = fetch_file_list(host, port)
             if not files:
                 self.app.call_from_thread(
-                    self._log, f"No files on [#718ca1]{host}:{port}[/]"
+                    self._log, f"No files on [#7090a0]{host}:{port}[/]"
                 )
             else:
                 for f in files:
                     self.app.call_from_thread(
                         self._log,
-                        f"  {markup_escape(f['name'])}  [#718ca1]{format_size(f['size'])}[/]",
+                        f"  {markup_escape(f['name'])}  [#7090a0]{format_size(f['size'])}[/]",
                     )
         except Exception as e:
             self.app.call_from_thread(
                 self._log,
-                f"[#e74c3c]Error:[/] {e}",
+                f"[#c26068]Error:[/] {e}",
             )
 
 

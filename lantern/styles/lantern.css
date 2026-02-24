@@ -1,18 +1,46 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   LANTERN TUI - Custom Stylesheet
+   LANTERN TUI — Custom Stylesheet
+   ═══════════════════════════════════════════════════════════════════════════
+
+   DARK THEME  — Jungle Dark
+   Deep forest-green-black backgrounds. Like looking at a terminal buried
+   inside a rainforest at 2 AM. Backgrounds have real green in them.
+   Bright jungle green accent. Warm sage-cream text.
+
+   bg-void    #0a0f0a   screen bg   (near-black, green soul)
+   bg-base    #0f1a12   panel bg    (deep forest floor)
+   bg-raised  #162118   table headers, modals
+   bg-ctrl    #1c2b1e   buttons, inputs
+   bg-hover   #1e3323   hover
+   bg-sel     #1a3d20   selection (rich jungle green)
+   bg-border  #2a4030   border (visible green line)
+
+   fg-primary #dde8d0   primary text (sage-cream)
+   fg-second  #8aaa88   secondary (muted sage)
+   fg-muted   #506050   muted
+   fg-dim     #2e3e2e   barely visible placeholder
+
+   green-hi   #5dba6e   bright jungle green (accent, online dot, success)
+   green-mid  #3d9455   mid green (headings, hover)
+   amber      #c4944a   amber (warnings)
+   rose       #c26068   rose-red (errors)
+   slate      #7090a0   slate (IPs, paths, sizes)
+
+   LIGHT THEME — Everforest Light  (unchanged)
    ═══════════════════════════════════════════════════════════════════════════ */
+
 
 /* ── Dark Theme (Default) ─────────────────────────────────────────────────── */
 
 Screen {
-    background: #0a0e0a;
+    background: #0a0f0a;
 }
 
 Header {
     dock: top;
     height: 3;
-    background: #0b0f0b;
-    color: #EBD5AB;
+    background: #0f1a12;
+    color: #dde8d0;
     text-style: bold;
     align: center middle;
 }
@@ -21,11 +49,10 @@ HeaderIcon {
     display: none;
 }
 
-
 Footer {
     dock: bottom;
-    background: #0d110d;
-    color: #8a7e5e;
+    background: #0f1a12;
+    color: #506050;
 }
 
 /* ── Main layout ── */
@@ -38,13 +65,13 @@ Footer {
 
 #sidebar {
     width: 40;
-    border: solid #1f2b1f;
-    background: #0d110d;
+    border: solid #2a4030;
+    background: #0f1a12;
     padding: 0 1;
 }
 
 #sidebar-title {
-    color: #EBD5AB;
+    color: #5dba6e;
     text-style: bold;
     padding: 1 0;
     text-align: center;
@@ -59,9 +86,9 @@ Footer {
     height: 1fr;
     background: transparent;
     scrollbar-size: 1 1;
-    scrollbar-color: #EBD5AB;
-    scrollbar-color-hover: #EBD5AB;
-    scrollbar-color-active: #EBD5AB;
+    scrollbar-color: #1c2b1e;
+    scrollbar-color-hover: #5dba6e;
+    scrollbar-color-active: #5dba6e;
 }
 
 #peer-list > ListItem {
@@ -71,34 +98,34 @@ Footer {
 }
 
 #peer-list > ListItem:hover {
-    background: #141a14;
+    background: #1e3323;
 }
 
 #peer-list > ListItem.-highlighted {
-    background: #1a2e3e;
+    background: #1a3d20;
 }
 
 .peer-name {
-    color: #5ec4ff;
+    color: #5dba6e;
     text-style: bold;
 }
 
 .peer-addr {
-    color: #718ca1;
+    color: #7090a0;
 }
 
 .peer-dot {
-    color: #00ff9f;
+    color: #5dba6e;
 }
 
 /* ── My Files section (sidebar bottom) ── */
 
 #my-files-title {
     text-align: center;
-    color: #EBD5AB;
+    color: #5dba6e;
     text-style: bold;
     padding: 1 0;
-    background: #0d110d;
+    background: #0f1a12;
     margin-top: 1;
 }
 
@@ -108,53 +135,53 @@ Footer {
     background: transparent;
     margin: 0 0 1 0;
     scrollbar-size: 1 1;
-    scrollbar-color: #EBD5AB;
-    scrollbar-color-hover: #EBD5AB;
-    scrollbar-color-active: #EBD5AB;
+    scrollbar-color: #1c2b1e;
+    scrollbar-color-hover: #5dba6e;
+    scrollbar-color-active: #5dba6e;
 }
 
 #my-files-table > .datatable--header {
-    background: #111511;
-    color: #EBD5AB;
+    background: #162118;
+    color: #5dba6e;
     text-style: bold;
 }
 
 #my-files-table > .datatable--cursor {
-    background: black;
-    color: #EBD5AB;
+    background: #1a3d20;
+    color: #dde8d0;
 }
 
 #my-files-table > .datatable--hover {
-    background: black;
-    color: #EBD5AB;
+    background: #1e3323;
+    color: #dde8d0;
 }
 
 #my-files-table > .datatable--odd-row {
-    color: #EBD5AB;
+    color: #dde8d0;
 }
 
 #my-files-table > .datatable--even-row {
-    background: #0f130f;
-    color: #EBD5AB;
+    background: #111a13;
+    color: #dde8d0;
 }
 
 /* ── Main panel (remote files) ── */
 
 #main-panel {
-    background: #0d110d;
-    border: solid #1f2b1f;
+    background: #0f1a12;
+    border: solid #2a4030;
 }
 
 #files-header {
     dock: top;
     height: auto;
     padding: 1 2;
-    background: #0d110d;
-    border-bottom: heavy #1f2b1f;
+    background: #162118;
+    border-bottom: heavy #2a4030;
 }
 
 #files-header-text {
-    color: #EBD5AB;
+    color: #dde8d0;
     text-style: bold;
 }
 
@@ -162,34 +189,34 @@ Footer {
     height: 1fr;
     background: transparent;
     scrollbar-size: 1 1;
-    scrollbar-color: #EBD5AB;
-    scrollbar-color-hover: #EBD5AB;
-    scrollbar-color-active: #EBD5AB;
+    scrollbar-color: #1c2b1e;
+    scrollbar-color-hover: #5dba6e;
+    scrollbar-color-active: #5dba6e;
 }
 
 #remote-files-table > .datatable--header {
-    background: #111511;
-    color: #EBD5AB;
+    background: #162118;
+    color: #5dba6e;
     text-style: bold;
 }
 
 #remote-files-table > .datatable--cursor {
-    background: black;
-    color: #EBD5AB;
+    background: #1a3d20;
+    color: #dde8d0;
 }
 
 #remote-files-table > .datatable--hover {
-    background: black;
-    color: #EBD5AB;
+    background: #1e3323;
+    color: #dde8d0;
 }
 
 #remote-files-table > .datatable--odd-row {
-    color: #EBD5AB;
+    color: #dde8d0;
 }
 
 #remote-files-table > .datatable--even-row {
-    background: #0f130f;
-    color: #EBD5AB;
+    background: #111a13;
+    color: #dde8d0;
 }
 
 #no-peer-label {
@@ -197,7 +224,7 @@ Footer {
     height: 100%;
     content-align: center middle;
     text-align: center;
-    color: #41505e;
+    color: #2e3e2e;
     text-style: italic;
 }
 
@@ -213,37 +240,38 @@ Footer {
     margin: 0 1;
     min-width: 14;
     height: 3;
-    background: #1a201a;
-    color: #EBD5AB;
+    background: #1c2b1e;
+    color: #8aaa88;
     text-style: bold;
-    border-top: tall #2a3a2a;
-    border-bottom: tall #0a0e0a;
+    border-top: tall #2a4030;
+    border-bottom: tall #0a0f0a;
 }
 
 #action-bar Button:hover {
-    background: black;
-    color: #EBD5AB;
-    border-top: tall grey;
+    background: #1a3d20;
+    color: #5dba6e;
+    border-top: tall #3a5840;
 }
 
 #action-bar Button:focus {
-    background: black;
-    color: #EBD5AB;
+    background: #1a3d20;
+    color: #dde8d0;
+    border-top: tall #3a5840;
 }
 
 /* ── Log panel ── */
 
 #log-panel {
     height: 12;
-    border: solid #1f2b1f;
-    background: #0d110d;
+    border: solid #2a4030;
+    background: #0f1a12;
 }
 
 #log-title {
     dock: top;
     height: auto;
     padding: 1 0;
-    color: #EBD5AB;
+    color: #5dba6e;
     text-style: bold;
 }
 
@@ -252,29 +280,29 @@ Footer {
     padding: 0 1;
     background: transparent;
     scrollbar-size: 1 1;
-    scrollbar-color: #EBD5AB;
-    scrollbar-color-hover: #EBD5AB;
-    scrollbar-color-active: #EBD5AB;
+    scrollbar-color: #1c2b1e;
+    scrollbar-color-hover: #5dba6e;
+    scrollbar-color-active: #5dba6e;
 }
 
 /* ── Command bar ── */
 
 #command-bar {
     height: auto;
-    background: #0d110d;
-    border: solid #1f2b1f;
+    background: #0f1a12;
+    border: solid #2a4030;
 }
 
 #command-input {
     width: 1fr;
-    background: #0d110d;
-    color: #EBD5AB;
-    border: tall #0d110d;
+    background: #0f1a12;
+    color: #dde8d0;
+    border: tall #0f1a12;
 }
 
 #command-input:focus {
-    background: #111511;
-    border: tall #111511;
+    background: #162118;
+    border: tall #2a4030;
 }
 
 /* ── Help modal ── */
@@ -284,23 +312,23 @@ Footer {
     max-width: 80%;
     height: auto;
     max-height: 80%;
-    background: #0d110d;
-    border: solid #1f2b1f;
+    background: #0f1a12;
+    border: solid #2a4030;
     padding: 1 2;
     margin: 2 4;
 }
 
 #help-title {
-    color: #EBD5AB;
+    color: #5dba6e;
     text-style: bold;
     text-align: center;
     padding: 1 0;
-    border-bottom: heavy #1f2b1f;
+    border-bottom: heavy #2a4030;
     margin-bottom: 1;
 }
 
 #help-content {
-    color: #c8c0a8;
+    color: #8aaa88;
     padding: 1 1;
     height: auto;
 }
@@ -308,52 +336,53 @@ Footer {
 #help-close-btn {
     margin-top: 1;
     width: 100%;
-    background: #1a201a;
-    color: #EBD5AB;
+    background: #1c2b1e;
+    color: #dde8d0;
     text-style: bold;
-    border-top: tall #2a3a2a;
-    border-bottom: tall #0a0e0a;
+    border-top: tall #2a4030;
+    border-bottom: tall #0a0f0a;
 }
 
 #help-close-btn:hover {
-    background: #1a2e3e;
-    color: #5ec4ff;
+    background: #1a3d20;
+    color: #5dba6e;
+    border-top: tall #3a5840;
 }
 
 HelpScreen {
     align: center middle;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(5, 10, 5, 0.85);
 }
 
 /* ── Upload modal ── */
 
 UploadConfirmScreen {
     align: center middle;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(5, 10, 5, 0.85);
 }
 
 #upload-dialog {
     width: 60;
     max-width: 75%;
     height: auto;
-    background: #0d110d;
-    border: solid #1f2b1f;
+    background: #0f1a12;
+    border: solid #2a4030;
     padding: 1 2;
     margin: 2 4;
 }
 
 #upload-title {
-    color: #EBD5AB;
+    color: #5dba6e;
     text-style: bold;
     text-align: center;
     padding: 1 0;
-    border-bottom: heavy #1f2b1f;
+    border-bottom: heavy #2a4030;
     margin-bottom: 1;
 }
 
 #upload-confirm-info {
     width: 100%;
-    color: #c8d8c8;
+    color: #8aaa88;
     padding: 1 0;
     margin-bottom: 1;
 }
@@ -372,78 +401,79 @@ UploadConfirmScreen {
 }
 
 #upload-confirm {
-    background: #1a201a;
-    color: #EBD5AB;
-    border-top: tall #2a3a2a;
-    border-bottom: tall #0a0e0a;
+    background: #1a3d20;
+    color: #5dba6e;
+    border-top: tall #3a5840;
+    border-bottom: tall #0a1a0c;
 }
 
 #upload-confirm:hover {
-    background: black;
-    color: #EBD5AB;
-    border-top: tall grey;
+    background: #205228;
+    color: #5dba6e;
+    border-top: tall #4a6850;
 }
 
 #upload-cancel {
-    background: #1a201a;
-    color: #EBD5AB;
-    border-top: tall #2a3a2a;
-    border-bottom: tall #0a0e0a;
+    background: #2e1c1e;
+    color: #c26068;
+    border-top: tall #442030;
+    border-bottom: tall #1a0e10;
 }
 
 #upload-cancel:hover {
-    background: black;
-    color: #EBD5AB;
-    border-top: tall grey;
+    background: #38222a;
+    color: #c26068;
+    border-top: tall #503040;
 }
 
 UploadScreen {
     align: center middle;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(5, 10, 5, 0.85);
 }
 
 /* ── Transfer Progress modal ── */
 
 TransferProgressScreen {
     align: center middle;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(5, 10, 5, 0.85);
 }
 
 #btn-cancel, #btn-close {
     margin-top: 1;
     width: 100%;
-    background: #3e1a1a;
-    color: #EBD5AB;
+    background: #2e1c1e;
+    color: #c26068;
     text-style: bold;
-    border-top: tall #5e2a2a;
-    border-bottom: tall #2a0a0a;
+    border-top: tall #442030;
+    border-bottom: tall #1a0e10;
 }
 
 #btn-cancel:hover {
-    background: #5e2a2a;
-    color: #EBD5AB;
+    background: #38222a;
+    color: #c26068;
 }
 
 #btn-close {
-    background: #1a3e2a;
-    border-top: tall #2a5e3e;
-    border-bottom: tall #0a2a1a;
+    background: #1a3d20;
+    color: #5dba6e;
+    border-top: tall #3a5840;
+    border-bottom: tall #0a1a0c;
 }
 
 #btn-close:hover {
-    background: #2a5e3e;
-    color: #EBD5AB;
+    background: #205228;
+    color: #5dba6e;
 }
 
 /* ── Loading screen ── */
 
 LoadingScreen {
     align: center middle;
-    background: #0a0e0a;
+    background: #0a0f0a;
 }
 
 #loading-logo {
-    color: #EBD5AB;
+    color: #5dba6e;
     text-style: bold;
     text-align: center;
     content-align: center middle;
@@ -454,21 +484,21 @@ LoadingScreen {
 #progress-bar {
     width: 1fr;
     height: 1;
-    background: #1a201a;
-    color: #5ec4ff;
+    background: #1c2b1e;
+    color: #5dba6e;
 }
 
 #progress-bar > .bar--bar {
-    color: #5ec4ff;
-    background: #2a4030;
+    color: #5dba6e;
+    background: #1a3d20;
 }
 
 #progress-bar > .bar--complete {
-    color: #00ff9f;
+    color: #3d9455;
 }
 
 #transfer-status {
-    color: #718ca1;
+    color: #506050;
     text-align: center;
     height: 1;
 }
@@ -480,10 +510,10 @@ LoadingScreen {
     height: auto;
     padding: 1 2;
     margin: 1 4;
-    background: #1a2e3e;
-    color: #EBD5AB;
+    background: #1c2b1e;
+    color: #dde8d0;
     text-style: bold;
-    border: solid #2a4e5e;
+    border: solid #2a4030;
     opacity: 0;
     transition: opacity 0.3;
 }
@@ -493,325 +523,378 @@ LoadingScreen {
 }
 
 #notification-toast.success {
-    background: #1a3e2a;
-    border: solid #2a5e3e;
+    background: #1a3d20;
+    border: solid #3a5840;
+    color: #5dba6e;
 }
 
 #notification-toast.error {
-    background: #3e1a1a;
-    border: solid #5e2a2a;
+    background: #2e1c1e;
+    border: solid #442030;
+    color: #c26068;
 }
 
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   LIGHT THEME
+   LIGHT THEME  — Everforest Light
+   Warm parchment backgrounds, muted sage greens, olive accents.
+   Easy on the eyes — mirrors the forest character of the dark theme.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .app-light Screen {
-    background: #f5f5f0;
+    background: #f3ede3;
 }
 
 .app-light Header {
-    background: #e8e8e0;
-    color: #4a4035;
+    background: #ede8d9;
+    color: #5c5143;
     text-style: bold;
 }
 
 .app-light Footer {
-    background: #e0e0d8;
-    color: #7a7a6a;
+    background: #e4dece;
+    color: #9a8e7e;
 }
 
+/* ── Sidebar ── */
+
 .app-light #sidebar {
-    border: solid #c8c8c0;
-    background: #e8e8e0;
+    border: solid #bfb9a8;
+    background: #ede8d9;
 }
 
 .app-light #sidebar-title {
-    color: #4a4035;
-}
-
-.app-light #peer-list > ListItem:hover {
-    background: #d8d8d0;
-}
-
-.app-light #peer-list > ListItem.-highlighted {
-    background: #c8e0f0;
+    color: #5c5143;
 }
 
 .app-light #peer-list {
-    scrollbar-color: #4a4035;
-    scrollbar-color-hover: #4a4035;
-    scrollbar-color-active: #4a4035;
+    scrollbar-color: #a8a090;
+    scrollbar-color-hover: #5a8a3a;
+    scrollbar-color-active: #5a8a3a;
+}
+
+.app-light #peer-list > ListItem:hover {
+    background: #ddd8c8;
+}
+
+.app-light #peer-list > ListItem.-highlighted {
+    background: #c8dfc0;
 }
 
 .app-light .peer-name {
-    color: #1a6a9a;
+    color: #3d8b7d;
 }
 
 .app-light .peer-addr {
-    color: #5a6070;
+    color: #4a6878;
 }
 
 .app-light .peer-dot {
-    color: #1a9a5a;
+    color: #5a8a3a;
 }
+
+/* ── My Files section ── */
 
 .app-light #my-files-title {
-    color: #4a4035;
-    background: #e8e8e0;
-}
-
-.app-light #my-files-table > .datatable--header {
-    background: #d8d8d0;
-    color: #4a4035;
-}
-
-.app-light #my-files-table > .datatable--cursor {
-    background: #c8c8c0;
-    color: #4a4035;
-}
-
-.app-light #my-files-table > .datatable--hover {
-    background: #d0d0c8;
-    color: #4a4035;
-}
-
-.app-light #my-files-table > .datatable--odd-row {
-    color: #4a4035;
-}
-
-.app-light #my-files-table > .datatable--even-row {
-    background: #e8e8e0;
-    color: #4a4035;
+    color: #5c5143;
+    background: #ede8d9;
 }
 
 .app-light #my-files-table {
-    scrollbar-color: #4a4035;
-    scrollbar-color-hover: #4a4035;
-    scrollbar-color-active: #4a4035;
+    scrollbar-color: #a8a090;
+    scrollbar-color-hover: #5a8a3a;
+    scrollbar-color-active: #5a8a3a;
 }
 
+.app-light #my-files-table > .datatable--header {
+    background: #d8d1bf;
+    color: #5c5143;
+    text-style: bold;
+}
+
+.app-light #my-files-table > .datatable--cursor {
+    background: #c8dfc0;
+    color: #3a3028;
+}
+
+.app-light #my-files-table > .datatable--hover {
+    background: #ddd8c8;
+    color: #5c5143;
+}
+
+.app-light #my-files-table > .datatable--odd-row {
+    color: #5c5143;
+}
+
+.app-light #my-files-table > .datatable--even-row {
+    background: #ede8d9;
+    color: #5c5143;
+}
+
+/* ── Main panel ── */
+
 .app-light #main-panel {
-    background: #e8e8e0;
-    border: solid #c8c8c0;
+    background: #ede8d9;
+    border: solid #bfb9a8;
 }
 
 .app-light #files-header {
-    background: #e8e8e0;
-    border-bottom: heavy #c8c8c0;
+    background: #ede8d9;
+    border-bottom: heavy #bfb9a8;
 }
 
 .app-light #files-header-text {
-    color: #4a4035;
-}
-
-.app-light #remote-files-table > .datatable--header {
-    background: #d8d8d0;
-    color: #4a4035;
-}
-
-.app-light #remote-files-table > .datatable--cursor {
-    background: #c8c8c0;
-    color: #4a4035;
-}
-
-.app-light #remote-files-table > .datatable--hover {
-    background: #d0d0c8;
-    color: #4a4035;
-}
-
-.app-light #remote-files-table > .datatable--odd-row {
-    color: #4a4035;
-}
-
-.app-light #remote-files-table > .datatable--even-row {
-    background: #e8e8e0;
-    color: #4a4035;
+    color: #5c5143;
 }
 
 .app-light #remote-files-table {
-    scrollbar-color: #4a4035;
-    scrollbar-color-hover: #4a4035;
-    scrollbar-color-active: #4a4035;
+    scrollbar-color: #a8a090;
+    scrollbar-color-hover: #5a8a3a;
+    scrollbar-color-active: #5a8a3a;
 }
 
+.app-light #remote-files-table > .datatable--header {
+    background: #d8d1bf;
+    color: #5c5143;
+    text-style: bold;
+}
+
+.app-light #remote-files-table > .datatable--cursor {
+    background: #c8dfc0;
+    color: #3a3028;
+}
+
+.app-light #remote-files-table > .datatable--hover {
+    background: #ddd8c8;
+    color: #5c5143;
+}
+
+.app-light #remote-files-table > .datatable--odd-row {
+    color: #5c5143;
+}
+
+.app-light #remote-files-table > .datatable--even-row {
+    background: #ede8d9;
+    color: #5c5143;
+}
+
+.app-light #no-peer-label {
+    color: #aea090;
+}
+
+/* ── Action bar ── */
+
 .app-light #action-bar Button {
-    background: #d8d8d0;
-    color: #4a4035;
-    border-top: tall #e8e8e0;
-    border-bottom: tall #c8c8c0;
+    background: #d8d1bf;
+    color: #5c5143;
+    text-style: bold;
+    border-top: tall #e4dece;
+    border-bottom: tall #bfb9a8;
 }
 
 .app-light #action-bar Button:hover {
-    background: #c8c8c0;
-    color: #4a4035;
-    border-top: tall #b8b8b0;
+    background: #c8dfc0;
+    color: #3a5c2a;
+    border-top: tall #d8f0d0;
 }
 
+.app-light #action-bar Button:focus {
+    background: #c8dfc0;
+    color: #3a5c2a;
+}
+
+/* ── Log panel ── */
+
 .app-light #log-panel {
-    border: solid #c8c8c0;
-    background: #e8e8e0;
+    border: solid #bfb9a8;
+    background: #ede8d9;
 }
 
 .app-light #log-title {
-    color: #4a4035;
+    color: #5c5143;
 }
 
 .app-light #log-view {
-    scrollbar-color: #4a4035;
-    scrollbar-color-hover: #4a4035;
-    scrollbar-color-active: #4a4035;
+    scrollbar-color: #a8a090;
+    scrollbar-color-hover: #5a8a3a;
+    scrollbar-color-active: #5a8a3a;
 }
 
+/* ── Command bar ── */
+
 .app-light #command-bar {
-    background: #e8e8e0;
-    border: solid #c8c8c0;
+    background: #ede8d9;
+    border: solid #bfb9a8;
 }
 
 .app-light #command-input {
-    background: #f0f0e8;
-    color: #4a4035;
-    border: tall #d8d8d0;
+    background: #f3ede3;
+    color: #5c5143;
+    border: tall #d8d1bf;
 }
 
 .app-light #command-input:focus {
-    background: #f8f8f0;
-    border: tall #c8c8c0;
+    background: #faf6f0;
+    border: tall #bfb9a8;
+}
+
+/* ── Help modal ── */
+
+.app-light HelpScreen {
+    background: rgba(100, 90, 75, 0.55);
 }
 
 .app-light #help-dialog {
-    background: #e8e8e0;
-    border: solid #c8c8c0;
+    background: #ede8d9;
+    border: solid #bfb9a8;
 }
 
 .app-light #help-title {
-    color: #4a4035;
-    border-bottom: heavy #c8c8c0;
+    color: #5c5143;
+    border-bottom: heavy #bfb9a8;
 }
 
 .app-light #help-content {
-    color: #5a5a4a;
+    color: #7a6e5e;
 }
 
 .app-light #help-close-btn {
-    background: #d8d8d0;
-    color: #4a4035;
-    border-top: tall #e8e8e0;
-    border-bottom: tall #c8c8c0;
+    background: #d8d1bf;
+    color: #5c5143;
+    border-top: tall #e4dece;
+    border-bottom: tall #bfb9a8;
 }
 
 .app-light #help-close-btn:hover {
-    background: #c8e0f0;
-    color: #1a6a9a;
+    background: #c8dfc0;
+    color: #3a5c2a;
+    border-top: tall #d8f0d0;
 }
 
-.app-light HelpScreen {
-    background: rgba(200, 200, 200, 0.75);
+/* ── Upload modal ── */
+
+.app-light UploadConfirmScreen {
+    background: rgba(100, 90, 75, 0.55);
 }
 
 .app-light #upload-dialog {
-    background: #e8e8e0;
-    border: solid #c8c8c0;
+    background: #ede8d9;
+    border: solid #bfb9a8;
 }
 
 .app-light #upload-title {
-    color: #4a4035;
-    border-bottom: heavy #c8c8c0;
+    color: #5c5143;
+    border-bottom: heavy #bfb9a8;
 }
 
 .app-light #upload-confirm-info {
-    color: #4a4035;
+    color: #5c5143;
 }
 
 .app-light #upload-confirm {
-    background: #d8d8d0;
-    color: #4a4035;
+    background: #c0d8b8;
+    color: #2a5220;
+    border-top: tall #d0e8c8;
+    border-bottom: tall #a0c098;
 }
 
 .app-light #upload-confirm:hover {
-    background: #c8c8c0;
-    color: #4a4035;
+    background: #aecba6;
+    color: #1e4018;
 }
 
 .app-light #upload-cancel {
-    background: #d8d8d0;
-    color: #4a4035;
+    background: #dfc8c8;
+    color: #7a2020;
+    border-top: tall #eedad8;
+    border-bottom: tall #c8a8a8;
 }
 
 .app-light #upload-cancel:hover {
-    background: #c8c8c0;
-    color: #4a4035;
+    background: #d4b8b8;
+    color: #621a1a;
 }
 
 .app-light UploadScreen {
-    background: rgba(200, 200, 200, 0.75);
+    background: rgba(100, 90, 75, 0.55);
 }
 
+/* ── Transfer progress modal ── */
+
 .app-light TransferProgressScreen {
-    background: rgba(200, 200, 200, 0.75);
+    background: rgba(100, 90, 75, 0.55);
 }
 
 .app-light #btn-cancel {
-    background: #e8c8c8;
-    color: #4a4035;
-    border-top: tall #d0a8a8;
-    border-bottom: tall #f0d8d8;
+    background: #dfc8c8;
+    color: #7a2020;
+    border-top: tall #eedad8;
+    border-bottom: tall #c8a8a8;
 }
 
 .app-light #btn-cancel:hover {
-    background: #d0a8a8;
-    color: #4a4035;
+    background: #d4b8b8;
+    color: #621a1a;
 }
 
 .app-light #btn-close {
-    background: #c8e8c8;
-    border-top: tall #a8d0a8;
-    border-bottom: tall #d8f0d8;
+    background: #c0d8b8;
+    color: #2a5220;
+    border-top: tall #d0e8c8;
+    border-bottom: tall #a0c098;
 }
 
 .app-light #btn-close:hover {
-    background: #a8d0a8;
-    color: #4a4035;
+    background: #aecba6;
+    color: #1e4018;
 }
 
+/* ── Loading screen ── */
+
 .app-light LoadingScreen {
-    background: #f5f5f0;
+    background: #f3ede3;
 }
 
 .app-light #loading-logo {
-    color: #4a4035;
+    color: #5c5143;
 }
 
+/* ── Progress bar ── */
+
 .app-light #progress-bar {
-    background: #d8d8d0;
-    color: #1a6a9a;
+    background: #d8d1bf;
+    color: #3d8b7d;
 }
 
 .app-light #progress-bar > .bar--bar {
-    color: #1a6a9a;
-    background: #b8d8c0;
+    color: #3d8b7d;
+    background: #c8dfc0;
 }
 
 .app-light #progress-bar > .bar--complete {
-    color: #1a9a5a;
+    color: #5a8a3a;
 }
 
 .app-light #transfer-status {
-    color: #5a6070;
+    color: #9a8e7e;
 }
 
+/* ── Notification toast ── */
+
 .app-light #notification-toast {
-    background: #c8e0f0;
-    color: #4a4035;
-    border: solid #a8c0d0;
+    background: #ddd8c8;
+    color: #5c5143;
+    border: solid #bfb9a8;
 }
 
 .app-light #notification-toast.success {
-    background: #c8f0d8;
-    border: solid #a8d0b8;
+    background: #c0d8b8;
+    border: solid #a0c098;
+    color: #2a5220;
 }
 
 .app-light #notification-toast.error {
-    background: #f0c8c8;
-    border: solid #d0a8a8;
+    background: #dfc8c8;
+    border: solid #c8a8a8;
+    color: #7a2020;
 }
