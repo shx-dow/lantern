@@ -297,7 +297,7 @@ class LoadingScreen(Screen):
 
     def action_dismiss(self) -> None:
         """Dismiss the loading screen safely."""
-        if self.is_mounted:
+        if self.is_mounted and len(self.app.screen_stack) > 1:
             self.app.pop_screen()
 
 
