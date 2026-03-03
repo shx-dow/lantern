@@ -17,62 +17,7 @@ from .client import download_file, list_files, upload_file
 from .config import PEER_ID, SHARED_DIR, TCP_PORT
 from .discovery import PeerDiscovery
 from .server import FileServer
-
-
-def _format_size(size_bytes: float) -> str:
-    for unit in ("B", "KB", "MB", "GB"):
-        if size_bytes < 1024:
-            return f"{size_bytes:.1f} {unit}"
-        size_bytes /= 1024
-    return f"{size_bytes:.1f} TB"
-
-
-def _parse_target(target: str, default_port: int) -> tuple[str, int] | None:
-    """
-    Parse a 'host:port' string.  If port is omitted, *default_port* is used.
-    Returns None if the port portion is not a valid integer.
-    """
-    if ":" in target:
-        host, port_str = target.rsplit(":", 1)
-        try:
-            return host, int(port_str)
-        except ValueError:
-            print(f"  [!] Invalid port: '{port_str}' — must be an integer.")
-            return None
-    return target, default_port
-
-
-def _print_help() -> None:
-    print("""
-  Lantern — P2P File Sharing Commands
-  ────────────────────────────────────────────────────
-  peers                            Show discovered peers on the LAN
-  list <host[:port]>               List files on a remote peer
-  download <host[:port]> <file>    Download a file from a peer
-  upload <host[:port]> <file>      Upload a local file to a peer
-  myfiles                          List your own shared files
-  help                             Show this help message
-  quit / exit                      Shut down this peer
-  ────────────────────────────────────────────────────
-""")
-
-
-def _list_local_files() -> None:
-    """Print files in the local shared directory."""
-    os.makedirs(SHARED_DIR, exist_ok=True)
-    files = [
-        f for f in os.listdir(SHARED_DIR) if os.path.isfile(os.path.join(SHARED_DIR, f))
-    ]
-
-    if not files:
-        print("  (no files in shared_files/)")
-        return
-
-    print(f"  {'Filename':<40} {'Size':>12}")
-    print(f"  {'-' * 40} {'-' * 12}")
-    for name in sorted(files):
-        size = os.path.getsize(os.path.join(SHARED_DIR, name))
-        print(f"  {name:<40} {_format_size(size):>12}")
+from .updater import check_for_updates
 
 
 def main() -> None:
@@ -84,6 +29,8 @@ def main() -> None:
         "--cli", action="store_true", help="Launch CLI mode instead of TUI dashboard"
     )
     args = parser.parse_args()
+
+    check_for_updates()
 
     tcp_port = args.port
     if not (1 <= tcp_port <= 65535):
@@ -137,7 +84,14 @@ def main() -> None:
 
             # ----------------------------------------------------------
             elif cmd == "help":
-                _print_help()
+                print("  Available commands:")
+                print("    help                       Show this help message")
+                print("    peers                      List discovered peers")
+                print("    myfiles                    List files in shared directory")
+                print("    list <host[:port]>         List files on a peer")
+                print("    download <host[:port]> <filename>  Download a file")
+                print("    upload <host[:port]> <filepath>    Upload a file")
+                print("    quit, exit                 Exit Lantern")
 
             # ----------------------------------------------------------
             elif cmd == "peers":
@@ -153,17 +107,36 @@ def main() -> None:
 
             # ----------------------------------------------------------
             elif cmd == "myfiles":
-                _list_local_files()
+                try:
+                    files = os.listdir(SHARED_DIR)
+                    if not files:
+                        print("  No files in shared directory.")
+                    else:
+                        print("  Shared files:")
+                        for f in sorted(files):
+                            fpath = os.path.join(SHARED_DIR, f)
+                            if os.path.isfile(fpath):
+                                size = os.path.getsize(fpath)
+                                print(f"    {f} ({size} bytes)")
+                except Exception as e:
+                    print(f"  [!] Error listing files: {e}")
 
             # ----------------------------------------------------------
             elif cmd == "list":
                 if len(tokens) < 2:
                     print("  Usage: list <host[:port]>")
                     continue
-                target = _parse_target(tokens[1], tcp_port)
-                if target is None:
-                    continue
-                host, port = target
+                target_str = tokens[1]
+                if ":" in target_str:
+                    try:
+                        host, port_str = target_str.rsplit(":", 1)
+                        port = int(port_str)
+                    except ValueError:
+                        print(f"  [!] Invalid host:port format: {target_str}")
+                        continue
+                else:
+                    host = target_str
+                    port = tcp_port
                 try:
                     list_files(host, port)
                 except Exception as e:
@@ -174,10 +147,17 @@ def main() -> None:
                 if len(tokens) < 3:
                     print("  Usage: download <host[:port]> <filename>")
                     continue
-                target = _parse_target(tokens[1], tcp_port)
-                if target is None:
-                    continue
-                host, port = target
+                target_str = tokens[1]
+                if ":" in target_str:
+                    try:
+                        host, port_str = target_str.rsplit(":", 1)
+                        port = int(port_str)
+                    except ValueError:
+                        print(f"  [!] Invalid host:port format: {target_str}")
+                        continue
+                else:
+                    host = target_str
+                    port = tcp_port
                 filename = os.path.basename(tokens[2])
                 if not filename:
                     print("  [!] Invalid filename.")
@@ -192,10 +172,17 @@ def main() -> None:
                 if len(tokens) < 3:
                     print("  Usage: upload <host[:port]> <filepath>")
                     continue
-                target = _parse_target(tokens[1], tcp_port)
-                if target is None:
-                    continue
-                host, port = target
+                target_str = tokens[1]
+                if ":" in target_str:
+                    try:
+                        host, port_str = target_str.rsplit(":", 1)
+                        port = int(port_str)
+                    except ValueError:
+                        print(f"  [!] Invalid host:port format: {target_str}")
+                        continue
+                else:
+                    host = target_str
+                    port = tcp_port
                 filepath = tokens[2]
                 try:
                     upload_file(host, port, filepath)
