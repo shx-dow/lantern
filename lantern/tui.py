@@ -1,12 +1,9 @@
-"""
-Lantern TUI — A polished terminal dashboard for P2P file sharing.
-
-Built with Textual.  Launched via `python peer.py --tui`.
-"""
+"""Textual interface for Lantern."""
 
 from __future__ import annotations
 
 import os
+import queue
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -39,21 +36,21 @@ from .client import (
     fetch_file_list,
     format_size,
 )
-from .config import PEER_ID, SHARED_DIR, TCP_PORT
+from .config import PEER_ID, SHARED_DIR, SHOW_WELCOME_SCREEN, TCP_PORT
 from .discovery import PeerDiscovery
 from .server import FileServer, UploadRequest
 
-# Load CSS from external file
 CSS_FILE = os.path.join(os.path.dirname(__file__), "styles", "lantern.css")
-
-
-# ==============================================================================
-# Transfer Progress Modal
-# ==============================================================================
+CLASSIC_LOGO = (
+    " _             _                \n"
+    "| |   __ _ _ _| |_ ___ _ _ _ _  \n"
+    "| |__/ _` | ' \\  _/ -_) '_| ' \\ \n"
+    "|____\\__,_|_||_\\__\\___|_| |_||_|"
+)
 
 
 class TransferProgressScreen(ModalScreen):
-    """Modal showing transfer progress with progress bar."""
+    """Shows live progress for a file transfer."""
 
     BINDINGS = [Binding("escape", "close", "Close")]
 
@@ -78,9 +75,6 @@ class TransferProgressScreen(ModalScreen):
             yield Label(f"0 / {format_size(self.total_size)}", id="transfer-status")
             yield ProgressBar(total=self.total_size, id="progress-bar")
             yield Button("Cancel", variant="error", id="btn-cancel")
-
-    def on_mount(self) -> None:
-        pass
 
     def update_progress(self, current: int) -> None:
         """Update the progress bar and status."""
@@ -135,13 +129,8 @@ class TransferProgressScreen(ModalScreen):
             self.dismiss(False)
 
 
-# ==============================================================================
-# Notification Widget
-# ==============================================================================
-
-
 class Notification(Static):
-    """Toast notification widget."""
+    """Small toast message."""
 
     DEFAULT_CSS = """
     Notification {
@@ -161,7 +150,6 @@ class Notification(Static):
     def on_mount(self) -> None:
         self.add_class(self.notification_type)
         self.add_class("visible")
-        # Auto-hide after 3 seconds
         self.set_timer(3.0, self._hide)
 
     def _hide(self) -> None:
@@ -169,13 +157,8 @@ class Notification(Static):
         self.set_timer(0.3, self.remove)
 
 
-# ==============================================================================
-# Help Modal
-# ==============================================================================
-
-
 class HelpScreen(ModalScreen):
-    """Full help overlay."""
+    """Short in-app guide."""
 
     BINDINGS = [Binding("escape", "dismiss", "Close")]
 
@@ -184,9 +167,6 @@ class HelpScreen(ModalScreen):
         self._dark = dark
 
     def compose(self) -> ComposeResult:
-        # Pick colors that are legible in the active theme.
-        # Dark:  aqua heading, yellow keybinds, blue-grey commands
-        # Light: teal heading, dark-olive keybinds, slate commands
         if self._dark:
             heading = "#5dba6e"
             keybind = "#c4944a"
@@ -197,21 +177,25 @@ class HelpScreen(ModalScreen):
             cmd = "#4a6878"
 
         with Container(id="help-dialog"):
-            yield Label("LANTERN  —  Help", id="help-title")
+            yield Label("Lantern help", id="help-title")
             yield Static(
-                f"[bold {heading}]Keybindings[/]\n"
+                f"[bold {heading}]Getting started[/]\n"
                 "\n"
-                f"  [{keybind}]F1[/]          Show this help\n"
-                f"  [{keybind}]F5[/]          Refresh file list from selected peer\n"
-                f"  [{keybind}]t[/]           Toggle theme (Lantern Dark / Light)\n"
-                f"  [{keybind}]u[/]           Upload a file to the selected peer\n"
-                f"  [{keybind}]d[/]           Download the selected file\n"
-                f"  [{keybind}]Tab[/]         Cycle focus between panels\n"
-                f"  [{keybind}]q[/]           Quit Lantern\n"
+                "  1. Run Lantern on another computer on this same network.\n"
+                "  2. Select that computer from the Peers list.\n"
+                "  3. Use Send file or Get selected to transfer files.\n"
                 "\n"
-                f"[bold {heading}]Command Input[/]\n"
+                f"[bold {heading}]Keys[/]\n"
                 "\n"
-                "  Type commands in the bottom bar:\n"
+                f"  [{keybind}]F1[/]     Help\n"
+                f"  [{keybind}]F5[/]     Refresh the selected peer\n"
+                f"  [{keybind}]t[/]      Toggle theme\n"
+                f"  [{keybind}]u[/]      Send a file\n"
+                f"  [{keybind}]d[/]      Get the selected remote file\n"
+                f"  [{keybind}]q[/]      Quit\n"
+                "\n"
+                f"[bold {heading}]Commands[/]\n"
+                "\n"
                 f"  [{cmd}]list <host[:port]>[/]               List remote files\n"
                 f"  [{cmd}]download <host[:port]> <file>[/]    Download a file\n"
                 f"  [{cmd}]upload <host[:port]> <path>[/]      Upload a file\n"
@@ -226,13 +210,8 @@ class HelpScreen(ModalScreen):
             self.dismiss()
 
 
-# ==============================================================================
-# Upload Confirmation Modal  (shown on the RECEIVER's side)
-# ==============================================================================
-
-
 class UploadConfirmScreen(ModalScreen[bool]):
-    """Ask the user whether to accept an incoming upload request."""
+    """Ask whether to accept an incoming upload."""
 
     BINDINGS = [Binding("escape", "reject", "Reject")]
 
@@ -242,7 +221,7 @@ class UploadConfirmScreen(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         with Container(id="upload-dialog"):
-            yield Label("Incoming Upload Request", id="upload-title")
+            yield Label("Incoming file", id="upload-title")
             yield Static(
                 f"[bold #5dba6e]{markup_escape(self.request.sender_ip)}[/] wants to send:\n\n"
                 f"  [bold]{markup_escape(self.request.filename)}[/]  "
@@ -263,55 +242,32 @@ class UploadConfirmScreen(ModalScreen[bool]):
         self.dismiss(False)
 
 
-# ==============================================================================
-# Loading Screen
-# ==============================================================================
-
-
-class LoadingScreen(Screen):
-    """Simple loading screen with just the logo."""
+class WelcomeScreen(Screen):
+    """A short branded loading screen."""
 
     BINDINGS = [
-        Binding("enter", "dismiss", ""),
-        Binding("space", "dismiss", ""),
-        Binding("escape", "dismiss", ""),
+        Binding("enter", "continue", "Start"),
+        Binding("space", "continue", "Start"),
+        Binding("escape", "continue", "Skip"),
     ]
 
     def compose(self) -> ComposeResult:
-        yield Static(
-            "[bold #5dba6e] _             _                [/]\n"
-            "[bold #5dba6e]| |   __ _ _ _| |_ ___ _ _ _ _  [/]\n"
-            "[bold #5dba6e]| |__/ _` | ' \\  _/ -_) '_| ' \\ [/]\n"
-            "[bold #5dba6e]|____\\__,_|_||_\\__\\___|_| |_||_|[/]",
-            id="loading-logo",
-        )
+        yield Static(CLASSIC_LOGO, id="welcome-logo")
 
     def on_mount(self) -> None:
-        # Auto-dismiss after 2 seconds
-        self.set_timer(2.0, self.action_dismiss)
+        self.set_timer(1.5, self.action_continue)
 
-    def on_key(self, event) -> None:
-        # Dismiss on any key press immediately
+    def action_continue(self) -> None:
         if self.is_mounted:
-            self.action_dismiss()
-
-    def action_dismiss(self) -> None:
-        """Dismiss the loading screen safely."""
-        if self.is_mounted and len(self.app.screen_stack) > 1:
             self.app.pop_screen()
 
 
-# ==============================================================================
-# Main TUI App
-# ==============================================================================
-
-
 class LanternApp(App):
-    """Lantern P2P File Sharing — Terminal Dashboard."""
+    """Lantern's terminal dashboard."""
 
     TITLE = "LANTERN"
     SUB_TITLE = "P2P File Sharing"
-    CSS_PATH = CSS_FILE  # absolute path — works both from source and after pip install
+    CSS_PATH = CSS_FILE
     ENABLE_COMMAND_PALETTE = False
 
     BINDINGS = [
@@ -323,7 +279,6 @@ class LanternApp(App):
         Binding("q", "quit_app", "Quit", show=True),
     ]
 
-    # -- reactive state --
     selected_peer: reactive[dict | None] = reactive(None)
     dark_theme: reactive[bool] = reactive(True)
     remote_files: reactive[list[dict]] = reactive([])
@@ -340,91 +295,79 @@ class LanternApp(App):
         self.tcp_port = tcp_port
         self.theme = "textual-dark"
 
-    # --------------------------------------------------------------------------
-    # Layout
-    # --------------------------------------------------------------------------
-
     def compose(self) -> ComposeResult:
         yield Header()
 
         with Horizontal(id="main-container"):
-            # ── Sidebar ──
             with Vertical(id="sidebar"):
                 yield Label("PEERS", id="sidebar-title")
+                yield Static("Looking for nearby Lantern apps...", id="peers-hint")
                 with Container(id="peer-list-container"):
                     yield ListView(id="peer-list")
                 yield Label("MY FILES", id="my-files-title")
                 yield DataTable(id="my-files-table")
 
-            # ── Main panel ──
             with Vertical(id="main-panel"):
                 with Container(id="files-header"):
                     yield Label(
-                        "Select a peer to view files",
+                        "Waiting for another Lantern app",
                         id="files-header-text",
                     )
+                yield Static(
+                    "[bold #5dba6e]Start here[/]\n\n"
+                    "Run Lantern on another computer connected to this network.\n"
+                    "When it appears in Peers, select it to browse files.\n\n"
+                    f"Files you receive are saved in:\n[#7090a0]{markup_escape(SHARED_DIR)}[/]\n\n"
+                    "Trusted networks only: Lantern does not encrypt or authenticate peers.",
+                    id="empty-state",
+                )
                 yield DataTable(id="remote-files-table")
 
-                # Action buttons
                 with Horizontal(id="action-bar"):
-                    yield Button("Upload", id="btn-upload")
-                    yield Button("Download", id="btn-download")
-                    yield Button("Refresh", id="btn-refresh")
+                    yield Button("Send file", id="btn-upload", disabled=True)
+                    yield Button("Get selected", id="btn-download", disabled=True)
+                    yield Button("Refresh list", id="btn-refresh", disabled=True)
 
-        # ── Log panel ──
         with Vertical(id="log-panel"):
-            yield Label(" LOG", id="log-title")
+            yield Label("ACTIVITY", id="log-title")
             yield RichLog(id="log-view", highlight=True, markup=True)
 
-        # ── Command input ──
         with Horizontal(id="command-bar"):
             yield Input(
-                placeholder="Type a command (or press F1 for help)...",
+                placeholder="Optional command line. Press F1 for help.",
                 id="command-input",
             )
 
         yield Footer()
 
-    # --------------------------------------------------------------------------
-    # Startup
-    # --------------------------------------------------------------------------
-
     def on_mount(self) -> None:
         self._setup_tables()
         self._refresh_my_files()
 
-        # Periodic refresh timers
         self.set_interval(3.0, self._poll_peers)
         self.set_interval(10.0, self._refresh_my_files)
-        # Poll for incoming upload requests from other peers
         self.set_interval(0.5, self._poll_upload_requests)
 
-        # Log startup info
         self._log(
             f"Lantern started  [bold #5dba6e]peer_id={PEER_ID}[/]  tcp_port={self.tcp_port}"
         )
         self._log(f"Shared directory: [#7090a0]{SHARED_DIR}[/]")
-        self._log("Discovering peers on the network...")
+        self._log("Looking for peers on this local network...")
 
-        # Show loading screen first - logs will appear after it's dismissed
-        self.push_screen(LoadingScreen())
+        if SHOW_WELCOME_SCREEN:
+            self.push_screen(WelcomeScreen())
 
     def _setup_tables(self) -> None:
-        # My files table
         my_table = self.query_one("#my-files-table", DataTable)
         my_table.add_columns("File", "Size")
         my_table.cursor_type = "row"
         my_table.zebra_stripes = True
 
-        # Remote files table
         remote_table = self.query_one("#remote-files-table", DataTable)
         remote_table.add_columns("Filename", "Size")
         remote_table.cursor_type = "row"
         remote_table.zebra_stripes = True
-
-    # --------------------------------------------------------------------------
-    # Logging & Notifications
-    # --------------------------------------------------------------------------
+        remote_table.display = False
 
     def _log(self, message: str) -> None:
         log_view = self.query_one("#log-view", RichLog)
@@ -432,22 +375,15 @@ class LanternApp(App):
         log_view.write(f"[#506050]{ts}[/]  {message}")
 
     def show_notification(self, message: str, notification_type: str = "info") -> None:
-        """Show a toast notification."""
         notification = Notification(message, notification_type)
         self.mount(notification)
-
-    # --------------------------------------------------------------------------
-    # Peer discovery polling
-    # --------------------------------------------------------------------------
 
     def _poll_peers(self) -> None:
         peers = self.discovery.get_peers()
         peer_list = self.query_one("#peer-list", ListView)
 
-        # Build a set of current peer IDs for comparison
         current_ids = {p["peer_id"] for p in peers}
 
-        # Check if the list actually changed
         existing_items = list(peer_list.children)
         existing_ids = set()
         for item in existing_items:
@@ -456,9 +392,8 @@ class LanternApp(App):
                 existing_ids.add(pid)
 
         if current_ids == existing_ids:
-            return  # No change
+            return
 
-        # Log new peers
         for p in peers:
             if p["peer_id"] not in existing_ids:
                 self._log(
@@ -467,12 +402,11 @@ class LanternApp(App):
                     f"([#7090a0]{markup_escape(p['ip'])}:{p['tcp_port']}[/])"
                 )
 
-        # Log lost peers
         for pid in existing_ids - current_ids:
             self._log(f"[#c26068]Lost[/] peer [#7090a0]{pid}[/]")
 
-        # Rebuild the list
         peer_list.clear()
+        self.query_one("#peers-hint", Static).display = not bool(peers)
         for p in peers:
             label = Static(
                 f"[#5dba6e]●[/] [bold #5dba6e]{markup_escape(p['hostname'])}[/]\n"
@@ -484,31 +418,29 @@ class LanternApp(App):
             item.peer_data = p  # type: ignore[attr-defined]
             peer_list.append(item)
 
-    # --------------------------------------------------------------------------
-    # Peer selection
-    # --------------------------------------------------------------------------
-
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         item = event.item
         peer = getattr(item, "peer_data", None)
         if peer:
             self.selected_peer = peer
+            self._set_peer_actions_enabled(True)
             header_label = self.query_one("#files-header-text", Label)
             header_label.update(
                 f"FILES ON: [bold #5dba6e]{markup_escape(peer['hostname'])}[/]  "
                 f"([#7090a0]{markup_escape(peer['ip'])}:{peer['tcp_port']}[/])"
             )
+            self.query_one("#empty-state", Static).display = False
+            self.query_one("#remote-files-table", DataTable).display = True
             self._refresh_remote_files()
 
-    # --------------------------------------------------------------------------
-    # Incoming upload request handling
-    # --------------------------------------------------------------------------
+    def _set_peer_actions_enabled(self, enabled: bool) -> None:
+        for button_id in ("#btn-upload", "#btn-download", "#btn-refresh"):
+            self.query_one(button_id, Button).disabled = not enabled
 
     def _poll_upload_requests(self) -> None:
-        """Check for pending upload requests from other peers and prompt the user."""
         try:
             request = self.file_server.pending_uploads.get_nowait()
-        except Exception:
+        except queue.Empty:
             return
         self._log(
             f"[#c4944a]Incoming upload request[/] from "
@@ -532,7 +464,6 @@ class LanternApp(App):
             )
 
             if request.filesize > 1024 * 1024:
-                # Show progress modal for large files
                 progress_screen = TransferProgressScreen(
                     "Receiving", request.filename, request.filesize
                 )
@@ -563,7 +494,6 @@ class LanternApp(App):
                 threading.Thread(target=_watch_completion, daemon=True).start()
                 request.accept(progress_callback=progress_callback)
             else:
-                # Small file — just accept and notify when done
                 def _notify_done() -> None:
                     request.transfer_done_event.wait()
                     if request.transfer_success:
@@ -588,10 +518,6 @@ class LanternApp(App):
                 f"[bold]{markup_escape(request.filename)}[/] from "
                 f"[#5dba6e]{markup_escape(request.sender_ip)}[/]"
             )
-
-    # --------------------------------------------------------------------------
-    # File listing refresh
-    # --------------------------------------------------------------------------
 
     def _refresh_my_files(self) -> None:
         table = self.query_one("#my-files-table", DataTable)
@@ -625,10 +551,8 @@ class LanternApp(App):
         table.clear()
         for f in files:
             table.add_row(f["name"], format_size(f["size"]))
-
-    # --------------------------------------------------------------------------
-    # Actions — keybindings
-    # --------------------------------------------------------------------------
+        if not files and self.selected_peer:
+            self._log("Selected peer is online, but it has no shared files yet.")
 
     def action_show_help(self) -> None:
         self.push_screen(HelpScreen(dark=self.dark_theme))
@@ -656,11 +580,11 @@ class LanternApp(App):
                 f"Refreshing files from [#5dba6e]{markup_escape(self.selected_peer['hostname'])}[/]..."
             )
         else:
-            self._log("No peer selected — refreshed local files only.")
+            self._log("Select a peer first. Local files were refreshed.")
 
     def action_upload_file(self) -> None:
         if not self.selected_peer:
-            self._log("[#c4944a]Warning:[/] Select a peer first before uploading.")
+            self._log("[#c4944a]Select a peer first[/] before sending a file.")
             return
         self.push_screen(
             FileOpen(
@@ -747,12 +671,14 @@ class LanternApp(App):
 
     def action_download_file(self) -> None:
         if not self.selected_peer:
-            self._log("[#c4944a]Warning:[/] Select a peer first.")
+            self._log("[#c4944a]Select a peer first[/] before getting a file.")
             return
 
         table = self.query_one("#remote-files-table", DataTable)
         if table.row_count == 0:
-            self._log("[#c4944a]Warning:[/] No files to download.")
+            self._log(
+                "[#c4944a]No remote files yet.[/] Refresh after the other computer shares a file."
+            )
             return
 
         try:
@@ -760,7 +686,7 @@ class LanternApp(App):
             row_data = table.get_row(row_key)
             filename = row_data[0]
         except Exception:
-            self._log("[#c4944a]Warning:[/] Select a file in the table first.")
+            self._log("[#c4944a]Select a file[/] in the remote table first.")
             return
 
         filesize = None
@@ -838,12 +764,6 @@ class LanternApp(App):
                 "error",
             )
 
-    # --------------------------------------------------------------------------
-    # Button handlers
-    # --------------------------------------------------------------------------
-    # Button handlers
-    # --------------------------------------------------------------------------
-
     def on_button_pressed(self, event: Button.Pressed) -> None:
         btn_id = event.button.id
         if btn_id == "btn-upload":
@@ -852,10 +772,6 @@ class LanternApp(App):
             self.action_download_file()
         elif btn_id == "btn-refresh":
             self.action_refresh_files()
-
-    # --------------------------------------------------------------------------
-    # Command input
-    # --------------------------------------------------------------------------
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id != "command-input":
@@ -901,16 +817,19 @@ class LanternApp(App):
             self._log(f"[#c4944a]Unknown command:[/] {raw}  (press F1 for help)")
 
     def _parse_target(self, target: str) -> tuple[str, int] | None:
-        """Parse 'host:port'. Returns None and logs an error if port is invalid."""
         if ":" in target:
             host, port_str = target.rsplit(":", 1)
             try:
-                return host, int(port_str)
+                port = int(port_str)
             except ValueError:
                 self._log(
                     f"[#c26068]Error:[/] Invalid port '{port_str}' — must be an integer."
                 )
                 return None
+            if not (1 <= port <= 65535):
+                self._log(f"[#c26068]Error:[/] Invalid port '{port}'.")
+                return None
+            return host, port
         return target, self.tcp_port
 
     def _cmd_peers(self) -> None:
@@ -945,12 +864,6 @@ class LanternApp(App):
             )
 
 
-# ==============================================================================
-# Entry point (called from peer.py)
-# ==============================================================================
-
-
 def run_tui(discovery: PeerDiscovery, file_server: FileServer, tcp_port: int) -> None:
-    """Launch the Lantern TUI."""
     app = LanternApp(discovery, file_server, tcp_port)
     app.run()

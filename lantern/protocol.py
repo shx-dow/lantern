@@ -7,38 +7,26 @@ knows exactly how many bytes to read for each message.
     [ 4 bytes: length ][ N bytes: payload ]
 """
 
+import contextlib
 import os
 import struct
+import tempfile
 import threading
 
 from typing_extensions import Callable
 
 from .config import BUFFER_SIZE
 
-# Maximum size of a single control message (commands, responses, listings).
-# A 64 KB cap prevents a malicious peer from causing memory exhaustion by
-# sending a fabricated 4-byte length prefix claiming a huge payload.
 MAX_MSG_SIZE = 64 * 1024  # 64 KB
 
 
-# ---------------------------------------------------------------------------
-# Message framing (for control messages: commands, responses, file listings)
-# ---------------------------------------------------------------------------
-
-
 def send_msg(sock, text: str) -> None:
-    """Send a UTF-8 string with a 4-byte length prefix."""
     data = text.encode("utf-8")
     length_prefix = struct.pack("!I", len(data))
     sock.sendall(length_prefix + data)
 
 
 def recv_msg(sock) -> str | None:
-    """Receive a length-prefixed UTF-8 string. Returns None on disconnect.
-
-    Raises ValueError if the declared message length exceeds MAX_MSG_SIZE,
-    preventing memory exhaustion from a malicious peer.
-    """
     raw_len = _recv_exactly(sock, 4)
     if raw_len is None:
         return None
@@ -52,18 +40,10 @@ def recv_msg(sock) -> str | None:
         return None
     return raw_data.decode("utf-8")
 
-
-# ---------------------------------------------------------------------------
-# File transfer
-# ---------------------------------------------------------------------------
-
-
 def send_file(sock, filepath: str) -> None:
-    """Send a file: first a message with the file size, then raw bytes.
+    if os.path.islink(filepath):
+        raise ValueError(f"Refusing to send symlink: {filepath}")
 
-    Uses socket.sendfile() for zero-copy OS-level transfer when available,
-    falling back to a manual chunk loop otherwise.
-    """
     filesize = os.path.getsize(filepath)
     send_msg(sock, str(filesize))
 
@@ -71,7 +51,6 @@ def send_file(sock, filepath: str) -> None:
         try:
             sock.sendfile(f)
         except AttributeError:
-            # Fallback for platforms where sendfile is unavailable
             while True:
                 chunk = f.read(BUFFER_SIZE)
                 if not chunk:
@@ -86,19 +65,21 @@ def recv_file(
     progress_callback: Callable[[int, int], None] | None = None,
     cancel_event: threading.Event | None = None,
 ) -> int:
-    """
-    Receive a file: read filesize raw bytes and write them to *filepath*.
-
-    Returns the number of bytes received.  If the transfer is cancelled or
-    the connection drops before completion, the partial file is deleted so
-    the shared directory is never left with corrupt data.
-
-    progress_callback: optional callable(current_bytes, total_bytes)
-    cancel_event: optional threading.Event to cancel the transfer
-    """
     received = 0
+    fd = None
+    tmp_path = None
     try:
-        with open(filepath, "wb") as f:
+        if os.path.islink(filepath):
+            raise ValueError(f"Refusing to write through symlink: {filepath}")
+
+        target_dir = os.path.dirname(filepath) or "."
+        fd, tmp_path = tempfile.mkstemp(
+            dir=target_dir,
+            prefix=f".{os.path.basename(filepath)}.",
+            suffix=".part",
+        )
+        with os.fdopen(fd, "wb") as f:
+            fd = None
             while received < filesize:
                 if cancel_event and cancel_event.is_set():
                     break
@@ -110,27 +91,26 @@ def recv_file(
                 received += len(chunk)
                 if progress_callback:
                     progress_callback(received, filesize)
+        if received == filesize and tmp_path:
+            os.replace(tmp_path, filepath)
+            tmp_path = None
     except Exception:
-        # Remove the partial file before re-raising
         try:
-            os.remove(filepath)
+            if tmp_path:
+                os.remove(tmp_path)
         except OSError:
             pass
         raise
+    finally:
+        if fd is not None:
+            with contextlib.suppress(OSError):
+                os.close(fd)
 
-    if received < filesize:
-        # Incomplete transfer (cancelled or disconnected) — clean up
-        try:
-            os.remove(filepath)
-        except OSError:
-            pass
+        if tmp_path:
+            with contextlib.suppress(OSError):
+                os.remove(tmp_path)
 
     return received
-
-
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
 
 
 def _recv_exactly(sock, num_bytes: int) -> bytes | None:

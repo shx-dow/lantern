@@ -20,6 +20,7 @@ Upload flow (with confirmation):
 import os
 import queue
 import re
+import shutil
 import socket
 import threading
 from dataclasses import dataclass, field
@@ -29,14 +30,11 @@ from typing_extensions import Callable
 from .config import SEPARATOR, SHARED_DIR, TCP_PORT
 from .protocol import recv_file, recv_msg, send_file, send_msg
 
-# Maximum number of simultaneous client connections handled at once.
 MAX_CONNECTIONS = 50
-
-# Seconds the server will wait for the user to accept/reject an upload request.
 UPLOAD_REQUEST_TIMEOUT = 60
+MAX_PENDING_UPLOADS = 20
 
 
-# Windows reserved device names that must never be used as filenames.
 _WINDOWS_RESERVED = re.compile(
     r"^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)", re.IGNORECASE
 )
@@ -50,17 +48,26 @@ def _safe_filename(filename: str) -> str:
     - Rejects Windows reserved device names (CON, NUL, COM1 … LPT9).
     - Falls back to "upload" if the result is empty or a bare dot/dotdot.
     """
-    # Strip directory components
     name = os.path.basename(filename)
-    # Remove null bytes
     name = name.replace("\x00", "")
-    # Reject empty, ".", ".."
     if name in ("", ".", ".."):
         return "upload"
-    # Reject Windows reserved names
     if _WINDOWS_RESERVED.match(name):
         return "upload"
     return name
+
+
+def _is_safe_shared_path(filepath: str) -> bool:
+    shared_root = os.path.realpath(SHARED_DIR)
+    candidate = os.path.realpath(filepath)
+    return os.path.commonpath([shared_root, candidate]) == shared_root
+
+
+def _has_enough_space(directory: str, required_bytes: int) -> bool:
+    try:
+        return shutil.disk_usage(directory).free >= required_bytes
+    except OSError:
+        return False
 
 
 @dataclass
@@ -99,15 +106,11 @@ class FileServer:
         self._running = False
         self._sock: socket.socket | None = None
         self._semaphore = threading.Semaphore(MAX_CONNECTIONS)
-        # Queue of UploadRequest objects waiting for TUI confirmation.
-        self.pending_uploads: queue.Queue[UploadRequest] = queue.Queue()
-
-    # ------------------------------------------------------------------
-    # Lifecycle
-    # ------------------------------------------------------------------
+        self.pending_uploads: queue.Queue[UploadRequest] = queue.Queue(
+            maxsize=MAX_PENDING_UPLOADS
+        )
 
     def start(self) -> None:
-        """Start the server in a daemon thread."""
         self._running = True
         thread = threading.Thread(target=self._accept_loop, daemon=True)
         thread.start()
@@ -116,10 +119,6 @@ class FileServer:
         self._running = False
         if self._sock:
             self._sock.close()
-
-    # ------------------------------------------------------------------
-    # Accept loop
-    # ------------------------------------------------------------------
 
     def _accept_loop(self) -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -130,7 +129,7 @@ class FileServer:
         except OSError:
             sock.close()
             return
-        sock.settimeout(2)  # so we can check self._running periodically
+        sock.settimeout(2)
         self._sock = sock
 
         while self._running:
@@ -142,7 +141,6 @@ class FileServer:
                 break
 
             if not self._semaphore.acquire(blocking=False):
-                # Too many concurrent connections — reject gracefully.
                 try:
                     conn.close()
                 except OSError:
@@ -155,10 +153,6 @@ class FileServer:
             handler.start()
 
         self._sock.close()
-
-    # ------------------------------------------------------------------
-    # Client handler — dispatches commands
-    # ------------------------------------------------------------------
 
     def _handle_client(self, conn: socket.socket, addr: tuple) -> None:
         try:
@@ -176,7 +170,6 @@ class FileServer:
             elif cmd == "UPLOAD_REQUEST" and len(parts) >= 3:
                 self._handle_upload_request(conn, addr[0], parts[1], parts[2])
             elif cmd == "UPLOAD" and len(parts) >= 3:
-                # Legacy: used by CLI mode (no confirmation)
                 self._handle_upload(conn, parts[1], parts[2])
             else:
                 send_msg(conn, f"ERROR{SEPARATOR}Unknown command")
@@ -189,12 +182,7 @@ class FileServer:
             conn.close()
             self._semaphore.release()
 
-    # ------------------------------------------------------------------
-    # Command handlers
-    # ------------------------------------------------------------------
-
     def _handle_list(self, conn: socket.socket) -> None:
-        """Send back a listing of files in the shared directory."""
         os.makedirs(SHARED_DIR, exist_ok=True)
 
         entries = []
@@ -204,17 +192,18 @@ class FileServer:
                 size = os.path.getsize(filepath)
                 entries.append(f"{name}{SEPARATOR}{size}")
 
-        # Join all entries with a newline; empty string means no files
         listing = "\n".join(entries)
         send_msg(conn, f"OK{SEPARATOR}{listing}")
 
     def _handle_download(self, conn: socket.socket, filename: str) -> None:
-        """Send the requested file to the peer."""
         filename = _safe_filename(filename)
         filepath = os.path.join(SHARED_DIR, filename)
 
         if not os.path.isfile(filepath):
             send_msg(conn, f"ERROR{SEPARATOR}File not found: {filename}")
+            return
+        if not _is_safe_shared_path(filepath):
+            send_msg(conn, f"ERROR{SEPARATOR}Unsafe file path")
             return
 
         filesize = os.path.getsize(filepath)
@@ -228,7 +217,6 @@ class FileServer:
         filename: str,
         filesize_str: str,
     ) -> None:
-        """Handle a TUI upload: pause and wait for user confirmation."""
         filename = _safe_filename(filename)
 
         try:
@@ -241,46 +229,56 @@ class FileServer:
             send_msg(conn, f"ERROR{SEPARATOR}File size must not be negative")
             return
 
-        # Build the request and enqueue it for the TUI to handle.
         request = UploadRequest(
             sender_ip=sender_ip,
             filename=filename,
             filesize=filesize,
         )
-        self.pending_uploads.put(request)
+        try:
+            self.pending_uploads.put_nowait(request)
+        except queue.Full:
+            send_msg(conn, f"ERROR{SEPARATOR}Server is busy, try again later")
+            return
 
-        # Block this thread until the user decides (or timeout).
         decided = request.decision_event.wait(timeout=UPLOAD_REQUEST_TIMEOUT)
 
         if not decided or not request.accepted:
             send_msg(conn, f"ERROR{SEPARATOR}Upload declined")
             return
 
-        # User accepted — proceed exactly like a normal upload.
-        send_msg(conn, "OK")
-        os.makedirs(SHARED_DIR, exist_ok=True)
-        filepath = os.path.join(SHARED_DIR, filename)
-        received = recv_file(conn, filepath, filesize, request.progress_callback)
+        try:
+            os.makedirs(SHARED_DIR, exist_ok=True)
+            if not _has_enough_space(SHARED_DIR, filesize):
+                send_msg(conn, f"ERROR{SEPARATOR}Not enough free disk space")
+                return
 
-        if received == filesize:
-            request.transfer_success = True
+            send_msg(conn, "OK")
+            filepath = os.path.join(SHARED_DIR, filename)
+            if not _is_safe_shared_path(filepath):
+                send_msg(conn, f"ERROR{SEPARATOR}Unsafe file path")
+                return
+            received = recv_file(conn, filepath, filesize, request.progress_callback)
+
+            if received == filesize:
+                request.transfer_success = True
+                send_msg(conn, f"OK{SEPARATOR}Received {filename} ({filesize} bytes)")
+            else:
+                send_msg(
+                    conn,
+                    f"ERROR{SEPARATOR}Incomplete transfer: got {received}/{filesize} bytes",
+                )
+        finally:
             request.transfer_done_event.set()
-            send_msg(conn, f"OK{SEPARATOR}Received {filename} ({filesize} bytes)")
-        else:
-            request.transfer_success = False
-            request.transfer_done_event.set()
-            send_msg(
-                conn,
-                f"ERROR{SEPARATOR}Incomplete transfer: got {received}/{filesize} bytes",
-            )
 
     def _handle_upload(
         self, conn: socket.socket, filename: str, filesize_str: str
     ) -> None:
-        """Receive a file from the peer and save it (legacy CLI, no confirmation)."""
         filename = _safe_filename(filename)
         os.makedirs(SHARED_DIR, exist_ok=True)
         filepath = os.path.join(SHARED_DIR, filename)
+        if not _is_safe_shared_path(filepath):
+            send_msg(conn, f"ERROR{SEPARATOR}Unsafe file path")
+            return
 
         try:
             filesize = int(filesize_str)
@@ -292,10 +290,8 @@ class FileServer:
             send_msg(conn, f"ERROR{SEPARATOR}File size must not be negative")
             return
 
-        # Tell the sender we're ready
         send_msg(conn, "OK")
 
-        # Receive the file using the shared protocol helper
         received = recv_file(conn, filepath, filesize)
 
         if received == filesize:

@@ -11,6 +11,7 @@ Two API layers:
 """
 
 import os
+import shutil
 import socket
 import threading
 
@@ -18,6 +19,13 @@ from typing_extensions import Callable
 
 from .config import BUFFER_SIZE, SEPARATOR, SHARED_DIR
 from .protocol import recv_file, recv_msg, send_msg
+
+
+def _has_enough_space(directory: str, required_bytes: int) -> bool:
+    try:
+        return shutil.disk_usage(directory).free >= required_bytes
+    except OSError:
+        return False
 
 
 def _connect(host: str, port: int, timeout: float = 10) -> socket.socket:
@@ -39,11 +47,6 @@ def format_size(size_bytes: int | float) -> str:
             return f"{size_bytes:.1f} {unit}"
         size_bytes /= 1024
     return f"{size_bytes:.1f} TB"
-
-
-# ======================================================================
-# Core API — returns structured data (used by TUI and CLI wrappers)
-# ======================================================================
 
 
 def fetch_file_list(host: str, port: int) -> list[dict]:
@@ -112,16 +115,18 @@ def do_download(
             filesize = int(parts[1])
         except ValueError:
             raise RuntimeError(f"Invalid file size in response: {parts[1]}")
+        if filesize < 0:
+            raise RuntimeError(f"Invalid file size in response: {parts[1]}")
 
         os.makedirs(SHARED_DIR, exist_ok=True)
-        # Sanitize the filename to prevent path traversal: a malicious server
-        # could return a filename like "../../.bashrc" in its file listing.
         safe_name = os.path.basename(filename)
         if not safe_name:
             raise RuntimeError(
                 f"Filename is invalid or empty after sanitization: {filename!r}"
             )
         dest = os.path.join(SHARED_DIR, safe_name)
+        if not _has_enough_space(SHARED_DIR, filesize):
+            raise RuntimeError(f"Not enough free disk space in {SHARED_DIR}")
         received = recv_file(sock, dest, filesize, progress_callback, cancel_event or threading.Event())
 
         if cancel_event and cancel_event.is_set():
@@ -154,12 +159,10 @@ def do_upload_request(
     filename = os.path.basename(filepath)
     filesize = os.path.getsize(filepath)
 
-    # Longer timeout: receiver has up to 60s to accept/reject
     sock = _connect(host, port, timeout=70)
     try:
         send_msg(sock, f"UPLOAD_REQUEST{SEPARATOR}{filename}{SEPARATOR}{filesize}")
 
-        # Block until receiver accepts, rejects, or times out
         response = recv_msg(sock)
         if response is None or not response.startswith("OK"):
             parts = (response or "").split(SEPARATOR, 1)
@@ -194,11 +197,6 @@ def do_upload_request(
             )
     finally:
         sock.close()
-
-
-# ======================================================================
-# CLI wrappers — print results (used by peer.py CLI mode)
-# ======================================================================
 
 
 def list_files(host: str, port: int) -> None:

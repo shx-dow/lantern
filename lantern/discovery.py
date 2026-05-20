@@ -103,8 +103,6 @@ class PeerDiscovery:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.settimeout(1)
 
-        # Beacon format: LANTERN_DISCOVER:<peer_id>:<tcp_port>:<hostname>
-        # Hostname is last so colons inside it (valid on some systems) are safe.
         payload = f"LANTERN_DISCOVER:{self.peer_id}:{self.tcp_port}:{self.hostname}"
         data = payload.encode("utf-8")
 

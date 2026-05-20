@@ -6,6 +6,7 @@ Checks GitHub releases for new versions on startup.
 import json
 import subprocess
 import sys
+import threading
 from typing import Optional
 
 GITHUB_REPO = "shx-dow/lantern"
@@ -57,3 +58,9 @@ def check_for_updates() -> None:
     if current != latest:
         print(f"\n!! : Update available: v{latest} (you have v{current})")
         print("Run: pip install --upgrade lantern-p2p\n")
+
+
+def check_for_updates_later() -> None:
+    """Run the update check without delaying app startup."""
+    thread = threading.Thread(target=check_for_updates, daemon=True)
+    thread.start()

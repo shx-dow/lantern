@@ -1,36 +1,6 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   LANTERN TUI — Custom Stylesheet
-   ═══════════════════════════════════════════════════════════════════════════
+/* Lantern TUI styles. */
 
-   DARK THEME  — Jungle Dark
-   Deep forest-green-black backgrounds. Like looking at a terminal buried
-   inside a rainforest at 2 AM. Backgrounds have real green in them.
-   Bright jungle green accent. Warm sage-cream text.
-
-   bg-void    #0a0f0a   screen bg   (near-black, green soul)
-   bg-base    #0f1a12   panel bg    (deep forest floor)
-   bg-raised  #162118   table headers, modals
-   bg-ctrl    #1c2b1e   buttons, inputs
-   bg-hover   #1e3323   hover
-   bg-sel     #1a3d20   selection (rich jungle green)
-   bg-border  #2a4030   border (visible green line)
-
-   fg-primary #dde8d0   primary text (sage-cream)
-   fg-second  #8aaa88   secondary (muted sage)
-   fg-muted   #506050   muted
-   fg-dim     #2e3e2e   barely visible placeholder
-
-   green-hi   #5dba6e   bright jungle green (accent, online dot, success)
-   green-mid  #3d9455   mid green (headings, hover)
-   amber      #c4944a   amber (warnings)
-   rose       #c26068   rose-red (errors)
-   slate      #7090a0   slate (IPs, paths, sizes)
-
-   LIGHT THEME — Everforest Light  (unchanged)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-
-/* ── Dark Theme (Default) ─────────────────────────────────────────────────── */
+/* Dark theme */
 
 Screen {
     background: #0a0f0a;
@@ -80,6 +50,12 @@ Footer {
 #peer-list-container {
     height: 1fr;
     min-height: 5;
+}
+
+#peers-hint {
+    color: #8aaa88;
+    padding: 0 1 1 1;
+    text-align: center;
 }
 
 #peer-list {
@@ -185,6 +161,14 @@ Footer {
     text-style: bold;
 }
 
+#empty-state {
+    height: 1fr;
+    padding: 4 8;
+    content-align: center middle;
+    text-align: center;
+    color: #8aaa88;
+}
+
 #remote-files-table {
     height: 1fr;
     background: transparent;
@@ -259,6 +243,13 @@ Footer {
     border-top: tall #3a5840;
 }
 
+#action-bar Button:disabled {
+    background: #121a13;
+    color: #506050;
+    border-top: tall #1a241b;
+    border-bottom: tall #0a0f0a;
+}
+
 /* ── Log panel ── */
 
 #log-panel {
@@ -270,7 +261,7 @@ Footer {
 #log-title {
     dock: top;
     height: auto;
-    padding: 1 0;
+    padding: 1 1;
     color: #5dba6e;
     text-style: bold;
 }
@@ -400,35 +391,30 @@ UploadConfirmScreen {
     text-style: bold;
 }
 
-#upload-confirm {
+#upload-accept {
     background: #1a3d20;
     color: #5dba6e;
     border-top: tall #3a5840;
     border-bottom: tall #0a1a0c;
 }
 
-#upload-confirm:hover {
+#upload-accept:hover {
     background: #205228;
     color: #5dba6e;
     border-top: tall #4a6850;
 }
 
-#upload-cancel {
+#upload-reject {
     background: #2e1c1e;
     color: #c26068;
     border-top: tall #442030;
     border-bottom: tall #1a0e10;
 }
 
-#upload-cancel:hover {
+#upload-reject:hover {
     background: #38222a;
     color: #c26068;
     border-top: tall #503040;
-}
-
-UploadScreen {
-    align: center middle;
-    background: rgba(5, 10, 5, 0.85);
 }
 
 /* ── Transfer Progress modal ── */
@@ -465,14 +451,14 @@ TransferProgressScreen {
     color: #5dba6e;
 }
 
-/* ── Loading screen ── */
+/* ── Welcome screen ── */
 
-LoadingScreen {
+WelcomeScreen {
     align: center middle;
     background: #0a0f0a;
 }
 
-#loading-logo {
+#welcome-logo {
     color: #5dba6e;
     text-style: bold;
     text-align: center;
@@ -664,6 +650,10 @@ FileSystemPickerScreen Input:focus {
     scrollbar-color-active: #5a8a3a;
 }
 
+.app-light #peers-hint {
+    color: #7a6e5e;
+}
+
 .app-light #peer-list > ListItem:hover {
     background: #ddd8c8;
 }
@@ -738,6 +728,10 @@ FileSystemPickerScreen Input:focus {
     color: #5c5143;
 }
 
+.app-light #empty-state {
+    color: #7a6e5e;
+}
+
 .app-light #remote-files-table {
     scrollbar-color: #a8a090;
     scrollbar-color-hover: #5a8a3a;
@@ -792,6 +786,13 @@ FileSystemPickerScreen Input:focus {
 .app-light #action-bar Button:focus {
     background: #c8dfc0;
     color: #3a5c2a;
+}
+
+.app-light #action-bar Button:disabled {
+    background: #e4dece;
+    color: #aea090;
+    border-top: tall #ede8d9;
+    border-bottom: tall #cfc7b6;
 }
 
 /* ── Log panel ── */
@@ -882,32 +883,28 @@ FileSystemPickerScreen Input:focus {
     color: #5c5143;
 }
 
-.app-light #upload-confirm {
+.app-light #upload-accept {
     background: #c0d8b8;
     color: #2a5220;
     border-top: tall #d0e8c8;
     border-bottom: tall #a0c098;
 }
 
-.app-light #upload-confirm:hover {
+.app-light #upload-accept:hover {
     background: #aecba6;
     color: #1e4018;
 }
 
-.app-light #upload-cancel {
+.app-light #upload-reject {
     background: #dfc8c8;
     color: #7a2020;
     border-top: tall #eedad8;
     border-bottom: tall #c8a8a8;
 }
 
-.app-light #upload-cancel:hover {
+.app-light #upload-reject:hover {
     background: #d4b8b8;
     color: #621a1a;
-}
-
-.app-light UploadScreen {
-    background: rgba(100, 90, 75, 0.55);
 }
 
 /* ── Transfer progress modal ── */
@@ -940,13 +937,13 @@ FileSystemPickerScreen Input:focus {
     color: #1e4018;
 }
 
-/* ── Loading screen ── */
+/* ── Welcome screen ── */
 
-.app-light LoadingScreen {
+.app-light WelcomeScreen {
     background: #f3ede3;
 }
 
-.app-light #loading-logo {
+.app-light #welcome-logo {
     color: #5c5143;
 }
 
