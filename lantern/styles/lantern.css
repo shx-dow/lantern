@@ -1,598 +1,442 @@
-/* Lantern TUI styles. */
-
-/* Dark theme */
+/* Lantern dashboard styling. */
 
 Screen {
-    background: #0a0f0a;
+    background: #07100d;
 }
 
 Header {
     dock: top;
-    height: 3;
-    background: #0f1a12;
-    color: #dde8d0;
+    height: 1;
+    background: #08110d;
+    color: #d9efe0;
     text-style: bold;
     align: center middle;
 }
 
-HeaderIcon {
-    display: none;
-}
-
 Footer {
     dock: bottom;
-    background: #0f1a12;
-    color: #506050;
+    height: 1;
+    background: #08110d;
+    color: #6d8a7a;
 }
 
-/* ── Main layout ── */
+#shell {
+    height: 1fr;
+    padding: 0 1;
+    background: #07100d;
+}
 
-#main-container {
+#masthead {
+    height: auto;
+    margin: 0 1 1 1;
+    border: blank;
+    border-bottom: solid #12211c;
+    background: #07100d;
+    padding: 0 1 1 1;
+}
+
+#masthead-row {
+    height: auto;
+    align: left middle;
+}
+
+#brand-block {
+    width: 28;
+    margin-right: 2;
+}
+
+#app-title {
+    color: #f0f6cb;
+    text-style: bold;
+    margin-right: 2;
+}
+
+#app-subtitle {
+    color: #80a9a0;
+    margin-right: 3;
+}
+
+#status-strip {
+    width: 1fr;
+    height: auto;
+    align: right middle;
+}
+
+.status-chip {
+    margin-left: 1;
+    padding: 0;
+    height: 1;
+    content-align: center middle;
+    color: #9db3a8;
+    background: transparent;
+    border: blank;
+}
+
+#status-online {
+    color: #74d47a;
+}
+
+#dashboard {
     height: 1fr;
 }
 
-/* ── Sidebar ── */
-
 #sidebar {
-    width: 40;
-    border: solid #2a4030;
-    background: #0f1a12;
-    padding: 0 1;
+    width: 42;
+    height: 1fr;
+    min-height: 0;
+    margin-right: 1;
 }
 
-#sidebar-title {
-    color: #5dba6e;
+#workspace {
+    width: 1fr;
+    height: 1fr;
+    min-height: 0;
+}
+
+#lower-panels {
+    height: 8;
+    min-height: 0;
+    margin-top: 0;
+}
+
+.panel-card {
+    border: solid #1a2a24;
+    background: #08130f;
+}
+
+#peer-card,
+#share-card {
+    padding: 1;
+    margin-bottom: 1;
+    border: solid #1a2a24;
+    background: #08130f;
+}
+
+#sidebar-title,
+#my-files-title,
+#transfer-title,
+#log-title {
+    color: #79d98f;
     text-style: bold;
-    padding: 1 0;
-    text-align: center;
+    margin-bottom: 1;
+}
+
+#peers-hint,
+#my-files-summary,
+#files-summary,
+#search-empty-state,
+#transfer-summary {
+    color: #7d9a8d;
 }
 
 #peer-list-container {
-    height: 1fr;
-    min-height: 5;
-}
-
-#peers-hint {
-    color: #8aaa88;
-    padding: 0 1 1 1;
-    text-align: center;
+    height: 6;
+    min-height: 6;
 }
 
 #peer-list {
     height: 1fr;
     background: transparent;
     scrollbar-size: 1 1;
-    scrollbar-color: #1c2b1e;
-    scrollbar-color-hover: #5dba6e;
-    scrollbar-color-active: #5dba6e;
+    scrollbar-color: #183129;
+    scrollbar-color-hover: #79d98f;
+    scrollbar-color-active: #79d98f;
 }
 
 #peer-list > ListItem {
     padding: 0 1;
-    height: 3;
+    height: 2;
     background: transparent;
 }
 
 #peer-list > ListItem:hover {
-    background: #1e3323;
+    background: #13261f;
 }
 
 #peer-list > ListItem.-highlighted {
-    background: #1a3d20;
+    background: #173528;
 }
 
-.peer-name {
-    color: #5dba6e;
-    text-style: bold;
+.peer-entry {
+    padding-top: 0;
 }
 
-.peer-addr {
-    color: #7090a0;
+#my-files-summary {
+    margin-bottom: 0;
 }
 
-.peer-dot {
-    color: #5dba6e;
-}
-
-/* ── My Files section (sidebar bottom) ── */
-
-#my-files-title {
-    text-align: center;
-    color: #5dba6e;
-    text-style: bold;
-    padding: 1 0;
-    background: #0f1a12;
-    margin-top: 1;
+#my-files-table,
+#remote-files-table {
+    background: transparent;
+    scrollbar-size: 1 1;
+    scrollbar-color: #183129;
+    scrollbar-color-hover: #79d98f;
+    scrollbar-color-active: #79d98f;
 }
 
 #my-files-table {
-    height: auto;
-    max-height: 12;
-    background: transparent;
-    margin: 0 0 1 0;
-    scrollbar-size: 1 1;
-    scrollbar-color: #1c2b1e;
-    scrollbar-color-hover: #5dba6e;
-    scrollbar-color-active: #5dba6e;
-}
-
-#my-files-table > .datatable--header {
-    background: #162118;
-    color: #5dba6e;
-    text-style: bold;
-}
-
-#my-files-table > .datatable--cursor {
-    background: #1a3d20;
-    color: #dde8d0;
-}
-
-#my-files-table > .datatable--hover {
-    background: #1e3323;
-    color: #dde8d0;
-}
-
-#my-files-table > .datatable--odd-row {
-    color: #dde8d0;
-}
-
-#my-files-table > .datatable--even-row {
-    background: #111a13;
-    color: #dde8d0;
-}
-
-/* ── Main panel (remote files) ── */
-
-#main-panel {
-    background: #0f1a12;
-    border: solid #2a4030;
-}
-
-#files-header {
-    dock: top;
-    height: auto;
-    padding: 1 2;
-    background: #162118;
-    border-bottom: heavy #2a4030;
-}
-
-#files-header-text {
-    color: #dde8d0;
-    text-style: bold;
-}
-
-#empty-state {
-    height: 1fr;
-    padding: 4 8;
-    content-align: center middle;
-    text-align: center;
-    color: #8aaa88;
+    height: 8;
+    min-height: 8;
 }
 
 #remote-files-table {
     height: 1fr;
-    background: transparent;
-    scrollbar-size: 1 1;
-    scrollbar-color: #1c2b1e;
-    scrollbar-color-hover: #5dba6e;
-    scrollbar-color-active: #5dba6e;
 }
 
+#my-files-table > .datatable--header,
 #remote-files-table > .datatable--header {
-    background: #162118;
-    color: #5dba6e;
+    background: #12211c;
+    color: #79d98f;
     text-style: bold;
 }
 
+#my-files-table > .datatable--cursor,
 #remote-files-table > .datatable--cursor {
-    background: #1a3d20;
-    color: #dde8d0;
+    background: #173528;
+    color: #e9f4ea;
 }
 
+#my-files-table > .datatable--hover,
 #remote-files-table > .datatable--hover {
-    background: #1e3323;
-    color: #dde8d0;
+    background: #13261f;
+    color: #e9f4ea;
 }
 
+#my-files-table > .datatable--odd-row,
 #remote-files-table > .datatable--odd-row {
-    color: #dde8d0;
+    color: #dce8df;
 }
 
+#my-files-table > .datatable--even-row,
 #remote-files-table > .datatable--even-row {
-    background: #111a13;
-    color: #dde8d0;
+    background: #0f1c17;
+    color: #dce8df;
 }
 
-#no-peer-label {
-    width: 100%;
-    height: 100%;
+#main-panel {
+    height: 1fr;
+    min-height: 0;
+    padding: 0 1 0 1;
+    border: solid #1a2a24;
+    background: #08130f;
+}
+
+#files-header {
+    height: auto;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: solid #12211c;
+}
+
+#files-header-copy {
+    width: 1fr;
+}
+
+#files-header-text {
+    color: #f0f6cb;
+    text-style: bold;
+}
+
+#file-search {
+    width: 24;
+    background: #08130f;
+    color: #e9f4ea;
+    border: tall #12211c;
+}
+
+#file-search:focus {
+    background: #0d1a15;
+    border: tall #355a45;
+}
+
+#empty-state,
+#search-empty-state {
+    height: auto;
+    min-height: 3;
+    padding: 0 1;
     content-align: center middle;
     text-align: center;
-    color: #2e3e2e;
-    text-style: italic;
+    color: #7d9a8d;
 }
 
-/* ── Action bar ── */
+#remote-files-table {
+    height: 1fr;
+    min-height: 12;
+}
+
+#remote-files-table:focus {
+    background: transparent;
+}
 
 #action-bar {
-    dock: bottom;
     height: auto;
+    margin-top: 0;
+    padding-top: 0;
     align: center middle;
+    border-top: solid #12211c;
 }
 
 #action-bar Button {
-    margin: 0 1;
-    min-width: 14;
-    height: 3;
-    background: #1c2b1e;
-    color: #8aaa88;
+    margin: 0 1 0 0;
+    min-width: 12;
+    height: 2;
+    background: transparent;
+    color: #9db3a8;
     text-style: bold;
-    border-top: tall #2a4030;
-    border-bottom: tall #0a0f0a;
+    border: blank;
 }
 
 #action-bar Button:hover {
-    background: #1a3d20;
-    color: #5dba6e;
-    border-top: tall #3a5840;
+    background: #0d1a15;
+    color: #79d98f;
 }
 
 #action-bar Button:focus {
-    background: #1a3d20;
-    color: #dde8d0;
-    border-top: tall #3a5840;
+    background: #0d1a15;
+    color: #e9f4ea;
 }
 
 #action-bar Button:disabled {
-    background: #121a13;
-    color: #506050;
-    border-top: tall #1a241b;
-    border-bottom: tall #0a0f0a;
+    background: transparent;
+    color: #54665e;
+    border: blank;
 }
 
-/* ── Log panel ── */
-
+#transfer-panel,
 #log-panel {
-    height: 12;
-    border: solid #2a4030;
-    background: #0f1a12;
+    width: 1fr;
+    height: 1fr;
+    min-height: 0;
+    padding: 0 1;
+    border: solid #1a2a24;
+    background: #08130f;
 }
 
-#log-title {
-    dock: top;
-    height: auto;
-    padding: 1 1;
-    color: #5dba6e;
-    text-style: bold;
+#transfer-panel {
+    margin-right: 1;
 }
 
+#transfer-header {
+    margin-bottom: 0;
+}
+
+#transfer-log,
 #log-view {
     height: 1fr;
-    padding: 0 1;
     background: transparent;
     scrollbar-size: 1 1;
-    scrollbar-color: #1c2b1e;
-    scrollbar-color-hover: #5dba6e;
-    scrollbar-color-active: #5dba6e;
+    scrollbar-color: #183129;
+    scrollbar-color-hover: #79d98f;
+    scrollbar-color-active: #79d98f;
 }
-
-/* ── Command bar ── */
 
 #command-bar {
     height: auto;
-    background: #0f1a12;
-    border: solid #2a4030;
+    margin: 0 1 1 1;
+    padding: 0 1;
+    border: solid #27443a;
+    background: #0b1814;
 }
 
 #command-input {
     width: 1fr;
-    background: #0f1a12;
-    color: #dde8d0;
-    border: tall #0f1a12;
+    background: #0b1814;
+    color: #f0f6cb;
+    border: tall #27443a;
 }
 
 #command-input:focus {
-    background: #162118;
-    border: tall #2a4030;
+    background: #0d1a15;
+    border: tall #355a45;
 }
 
-/* ── Help modal ── */
-
+#upload-dialog,
 #help-dialog {
-    width: 70;
-    max-width: 80%;
-    height: auto;
-    max-height: 80%;
-    background: #0f1a12;
-    border: solid #2a4030;
+    background: #08130f;
+    border: blank;
     padding: 1 2;
     margin: 2 4;
 }
 
+#upload-title,
 #help-title {
-    color: #5dba6e;
+    color: #79d98f;
     text-style: bold;
     text-align: center;
     padding: 1 0;
-    border-bottom: heavy #2a4030;
+    border-bottom: heavy #12211c;
     margin-bottom: 1;
 }
 
-#help-content {
-    color: #8aaa88;
-    padding: 1 1;
-    height: auto;
+#upload-confirm-info,
+#help-content,
+#transfer-status {
+    color: #9db3a8;
 }
 
-#help-close-btn {
-    margin-top: 1;
-    width: 100%;
-    background: #1c2b1e;
-    color: #dde8d0;
-    text-style: bold;
-    border-top: tall #2a4030;
-    border-bottom: tall #0a0f0a;
-}
-
-#help-close-btn:hover {
-    background: #1a3d20;
-    color: #5dba6e;
-    border-top: tall #3a5840;
-}
-
-HelpScreen {
-    align: center middle;
-    background: rgba(5, 10, 5, 0.85);
-}
-
-/* ── Upload modal ── */
-
-UploadConfirmScreen {
-    align: center middle;
-    background: rgba(5, 10, 5, 0.85);
-}
-
-#upload-dialog {
-    width: 60;
-    max-width: 75%;
-    height: auto;
-    background: #0f1a12;
-    border: solid #2a4030;
-    padding: 1 2;
-    margin: 2 4;
-}
-
-#upload-title {
-    color: #5dba6e;
-    text-style: bold;
-    text-align: center;
-    padding: 1 0;
-    border-bottom: heavy #2a4030;
-    margin-bottom: 1;
-}
-
-#upload-confirm-info {
-    width: 100%;
-    color: #8aaa88;
-    padding: 1 0;
-    margin-bottom: 1;
-}
-
-#upload-btn-bar {
-    width: 100%;
-    height: auto;
-    align: center middle;
-}
-
-#upload-btn-bar Button {
-    margin: 0 1;
-    min-width: 16;
-    height: 3;
-    text-style: bold;
-}
-
-#upload-accept {
-    background: #1a3d20;
-    color: #5dba6e;
-    border-top: tall #3a5840;
-    border-bottom: tall #0a1a0c;
-}
-
-#upload-accept:hover {
-    background: #205228;
-    color: #5dba6e;
-    border-top: tall #4a6850;
-}
-
-#upload-reject {
-    background: #2e1c1e;
-    color: #c26068;
-    border-top: tall #442030;
-    border-bottom: tall #1a0e10;
-}
-
-#upload-reject:hover {
-    background: #38222a;
-    color: #c26068;
-    border-top: tall #503040;
-}
-
-/* ── Transfer Progress modal ── */
-
-TransferProgressScreen {
-    align: center middle;
-    background: rgba(5, 10, 5, 0.85);
-}
-
-#btn-cancel, #btn-close {
-    margin-top: 1;
-    width: 100%;
-    background: #2e1c1e;
-    color: #c26068;
-    text-style: bold;
-    border-top: tall #442030;
-    border-bottom: tall #1a0e10;
-}
-
-#btn-cancel:hover {
-    background: #38222a;
-    color: #c26068;
-}
-
+#upload-btn-bar,
+#help-close-btn,
+#btn-cancel,
 #btn-close {
-    background: #1a3d20;
-    color: #5dba6e;
-    border-top: tall #3a5840;
-    border-bottom: tall #0a1a0c;
-}
-
-#btn-close:hover {
-    background: #205228;
-    color: #5dba6e;
-}
-
-/* ── Welcome screen ── */
-
-WelcomeScreen {
-    align: center middle;
-    background: #0a0f0a;
-}
-
-#welcome-logo {
-    color: #5dba6e;
+    margin-top: 1;
+    width: 100%;
     text-style: bold;
-    text-align: center;
-    content-align: center middle;
 }
 
-/* ── Progress bar ── */
+#upload-accept,
+#btn-close {
+    background: #173528;
+    color: #79d98f;
+    border-top: tall #4d7b62;
+    border-bottom: tall #07100d;
+}
+
+#upload-accept:hover,
+#btn-close:hover {
+    background: #1e4332;
+    color: #b7f0be;
+}
+
+#upload-reject,
+#btn-cancel {
+    background: #301c24;
+    color: #e38996;
+    border-top: tall #5d3240;
+    border-bottom: tall #12080b;
+}
+
+#upload-reject:hover,
+#btn-cancel:hover {
+    background: #3a222c;
+    color: #f1b2bd;
+}
 
 #progress-bar {
     width: 1fr;
     height: 1;
-    background: #1c2b1e;
-    color: #5dba6e;
+    background: #0d1713;
+    color: #79d98f;
 }
 
 #progress-bar > .bar--bar {
-    color: #5dba6e;
-    background: #1a3d20;
+    color: #79d98f;
+    background: #173528;
 }
 
 #progress-bar > .bar--complete {
-    color: #3d9455;
+    color: #4d7b62;
 }
-
-#transfer-status {
-    color: #506050;
-    text-align: center;
-    height: 1;
-}
-
-/* ── File picker (textual-fspicker overrides) ── */
-
-FileSystemPickerScreen {
-    align: center middle;
-    background: rgba(5, 10, 5, 0.85);
-}
-
-FileSystemPickerScreen Dialog {
-    background: #0f1a12;
-    border: solid #2a4030;
-    border-title-color: #dde8d0;
-    border-title-background: #0f1a12;
-    border-subtitle-color: #c26068;
-    border-subtitle-background: #2e1c1e;
-}
-
-FileSystemPickerScreen OptionList,
-FileSystemPickerScreen OptionList:focus {
-    background: #0f1a12;
-    scrollbar-size: 1 1;
-    scrollbar-color: #1c2b1e;
-    scrollbar-color-hover: #5dba6e;
-    scrollbar-color-active: #5dba6e;
-}
-
-FileSystemPickerScreen OptionList > .option-list--option-highlighted {
-    background: #1a3d20;
-    color: #dde8d0;
-    text-style: bold;
-}
-
-FileSystemPickerScreen OptionList > .option-list--option-hover {
-    background: #1e3323;
-    color: #dde8d0;
-}
-
-FileSystemPickerScreen Button {
-    background: #1c2b1e;
-    color: #8aaa88;
-    text-style: bold;
-    border-top: tall #2a4030;
-    border-bottom: tall #0a0f0a;
-}
-
-FileSystemPickerScreen Button:hover {
-    background: #1a3d20;
-    color: #5dba6e;
-    border-top: tall #3a5840;
-}
-
-FileSystemPickerScreen Button:focus {
-    background: #1a3d20;
-    color: #dde8d0;
-    border-top: tall #3a5840;
-}
-
-FileSystemPickerScreen DriveNavigation,
-FileSystemPickerScreen DriveNavigation:focus {
-    border: blank;
-    border-right: solid #2a4030;
-    background: #0f1a12;
-}
-
-FileSystemPickerScreen DriveNavigation > .option-list--option-highlighted {
-    background: #1a3d20;
-    color: #dde8d0;
-    text-style: bold;
-}
-
-FileSystemPickerScreen CurrentDirectory {
-    color: #7090a0;
-    border-bottom: solid #2a4030;
-    background: #162118;
-}
-
-FileSystemPickerScreen DirectoryNavigation > .directory-navigation--hidden {
-    color: #506050;
-    text-style: italic;
-}
-
-FileSystemPickerScreen Input {
-    background: #0f1a12;
-    color: #dde8d0;
-    border: tall #1c2b1e;
-}
-
-FileSystemPickerScreen Input:focus {
-    background: #162118;
-    border: tall #2a4030;
-}
-
-/* ── Notification toast ── */
 
 #notification-toast {
     dock: top;
     height: auto;
     padding: 1 2;
     margin: 1 4;
-    background: #1c2b1e;
-    color: #dde8d0;
+    background: #0d1713;
+    color: #e9f4ea;
     text-style: bold;
-    border: solid #2a4030;
+    border: blank;
     opacity: 0;
-    transition: opacity 0.3;
 }
 
 #notification-toast.visible {
@@ -600,478 +444,105 @@ FileSystemPickerScreen Input:focus {
 }
 
 #notification-toast.success {
-    background: #1a3d20;
-    border: solid #3a5840;
-    color: #5dba6e;
+    background: #173528;
+    border: solid #3f6a55;
+    color: #79d98f;
 }
 
 #notification-toast.error {
-    background: #2e1c1e;
-    border: solid #442030;
-    color: #c26068;
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   LIGHT THEME  — Everforest Light
-   Warm parchment backgrounds, muted sage greens, olive accents.
-   Easy on the eyes — mirrors the forest character of the dark theme.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-.app-light Screen {
-    background: #f3ede3;
-}
-
-.app-light Header {
-    background: #ede8d9;
-    color: #5c5143;
-    text-style: bold;
-}
-
-.app-light Footer {
-    background: #e4dece;
-    color: #9a8e7e;
-}
-
-/* ── Sidebar ── */
-
-.app-light #sidebar {
-    border: solid #bfb9a8;
-    background: #ede8d9;
-}
-
-.app-light #sidebar-title {
-    color: #5c5143;
-}
-
-.app-light #peer-list {
-    scrollbar-color: #a8a090;
-    scrollbar-color-hover: #5a8a3a;
-    scrollbar-color-active: #5a8a3a;
-}
-
-.app-light #peers-hint {
-    color: #7a6e5e;
-}
-
-.app-light #peer-list > ListItem:hover {
-    background: #ddd8c8;
-}
-
-.app-light #peer-list > ListItem.-highlighted {
-    background: #c8dfc0;
-}
-
-.app-light .peer-name {
-    color: #3d8b7d;
-}
-
-.app-light .peer-addr {
-    color: #4a6878;
-}
-
-.app-light .peer-dot {
-    color: #5a8a3a;
-}
-
-/* ── My Files section ── */
-
-.app-light #my-files-title {
-    color: #5c5143;
-    background: #ede8d9;
-}
-
-.app-light #my-files-table {
-    scrollbar-color: #a8a090;
-    scrollbar-color-hover: #5a8a3a;
-    scrollbar-color-active: #5a8a3a;
-}
-
-.app-light #my-files-table > .datatable--header {
-    background: #d8d1bf;
-    color: #5c5143;
-    text-style: bold;
-}
-
-.app-light #my-files-table > .datatable--cursor {
-    background: #c8dfc0;
-    color: #3a3028;
-}
-
-.app-light #my-files-table > .datatable--hover {
-    background: #ddd8c8;
-    color: #5c5143;
-}
-
-.app-light #my-files-table > .datatable--odd-row {
-    color: #5c5143;
-}
-
-.app-light #my-files-table > .datatable--even-row {
-    background: #ede8d9;
-    color: #5c5143;
-}
-
-/* ── Main panel ── */
-
-.app-light #main-panel {
-    background: #ede8d9;
-    border: solid #bfb9a8;
-}
-
-.app-light #files-header {
-    background: #ede8d9;
-    border-bottom: heavy #bfb9a8;
-}
-
-.app-light #files-header-text {
-    color: #5c5143;
-}
-
-.app-light #empty-state {
-    color: #7a6e5e;
-}
-
-.app-light #remote-files-table {
-    scrollbar-color: #a8a090;
-    scrollbar-color-hover: #5a8a3a;
-    scrollbar-color-active: #5a8a3a;
-}
-
-.app-light #remote-files-table > .datatable--header {
-    background: #d8d1bf;
-    color: #5c5143;
-    text-style: bold;
-}
-
-.app-light #remote-files-table > .datatable--cursor {
-    background: #c8dfc0;
-    color: #3a3028;
-}
-
-.app-light #remote-files-table > .datatable--hover {
-    background: #ddd8c8;
-    color: #5c5143;
-}
-
-.app-light #remote-files-table > .datatable--odd-row {
-    color: #5c5143;
-}
-
-.app-light #remote-files-table > .datatable--even-row {
-    background: #ede8d9;
-    color: #5c5143;
-}
-
-.app-light #no-peer-label {
-    color: #aea090;
-}
-
-/* ── Action bar ── */
-
-.app-light #action-bar Button {
-    background: #d8d1bf;
-    color: #5c5143;
-    text-style: bold;
-    border-top: tall #e4dece;
-    border-bottom: tall #bfb9a8;
-}
-
-.app-light #action-bar Button:hover {
-    background: #c8dfc0;
-    color: #3a5c2a;
-    border-top: tall #d8f0d0;
-}
-
-.app-light #action-bar Button:focus {
-    background: #c8dfc0;
-    color: #3a5c2a;
-}
-
-.app-light #action-bar Button:disabled {
-    background: #e4dece;
-    color: #aea090;
-    border-top: tall #ede8d9;
-    border-bottom: tall #cfc7b6;
-}
-
-/* ── Log panel ── */
-
-.app-light #log-panel {
-    border: solid #bfb9a8;
-    background: #ede8d9;
-}
-
-.app-light #log-title {
-    color: #5c5143;
-}
-
-.app-light #log-view {
-    scrollbar-color: #a8a090;
-    scrollbar-color-hover: #5a8a3a;
-    scrollbar-color-active: #5a8a3a;
-}
-
-/* ── Command bar ── */
-
-.app-light #command-bar {
-    background: #ede8d9;
-    border: solid #bfb9a8;
-}
-
-.app-light #command-input {
-    background: #f3ede3;
-    color: #5c5143;
-    border: tall #d8d1bf;
-}
-
-.app-light #command-input:focus {
-    background: #faf6f0;
-    border: tall #bfb9a8;
-}
-
-/* ── Help modal ── */
-
-.app-light HelpScreen {
-    background: rgba(100, 90, 75, 0.55);
-}
-
-.app-light #help-dialog {
-    background: #ede8d9;
-    border: solid #bfb9a8;
-}
-
-.app-light #help-title {
-    color: #5c5143;
-    border-bottom: heavy #bfb9a8;
-}
-
-.app-light #help-content {
-    color: #7a6e5e;
-}
-
-.app-light #help-close-btn {
-    background: #d8d1bf;
-    color: #5c5143;
-    border-top: tall #e4dece;
-    border-bottom: tall #bfb9a8;
-}
-
-.app-light #help-close-btn:hover {
-    background: #c8dfc0;
-    color: #3a5c2a;
-    border-top: tall #d8f0d0;
-}
-
-/* ── Upload modal ── */
-
-.app-light UploadConfirmScreen {
-    background: rgba(100, 90, 75, 0.55);
-}
-
-.app-light #upload-dialog {
-    background: #ede8d9;
-    border: solid #bfb9a8;
-}
-
-.app-light #upload-title {
-    color: #5c5143;
-    border-bottom: heavy #bfb9a8;
-}
-
-.app-light #upload-confirm-info {
-    color: #5c5143;
-}
-
-.app-light #upload-accept {
-    background: #c0d8b8;
-    color: #2a5220;
-    border-top: tall #d0e8c8;
-    border-bottom: tall #a0c098;
-}
-
-.app-light #upload-accept:hover {
-    background: #aecba6;
-    color: #1e4018;
-}
-
-.app-light #upload-reject {
-    background: #dfc8c8;
-    color: #7a2020;
-    border-top: tall #eedad8;
-    border-bottom: tall #c8a8a8;
-}
-
-.app-light #upload-reject:hover {
-    background: #d4b8b8;
-    color: #621a1a;
-}
-
-/* ── Transfer progress modal ── */
-
-.app-light TransferProgressScreen {
-    background: rgba(100, 90, 75, 0.55);
-}
-
-.app-light #btn-cancel {
-    background: #dfc8c8;
-    color: #7a2020;
-    border-top: tall #eedad8;
-    border-bottom: tall #c8a8a8;
-}
-
-.app-light #btn-cancel:hover {
-    background: #d4b8b8;
-    color: #621a1a;
-}
-
-.app-light #btn-close {
-    background: #c0d8b8;
-    color: #2a5220;
-    border-top: tall #d0e8c8;
-    border-bottom: tall #a0c098;
-}
-
-.app-light #btn-close:hover {
-    background: #aecba6;
-    color: #1e4018;
-}
-
-/* ── Welcome screen ── */
-
-.app-light WelcomeScreen {
-    background: #f3ede3;
-}
-
-.app-light #welcome-logo {
-    color: #5c5143;
-}
-
-/* ── Progress bar ── */
-
-.app-light #progress-bar {
-    background: #d8d1bf;
-    color: #3d8b7d;
-}
-
-.app-light #progress-bar > .bar--bar {
-    color: #3d8b7d;
-    background: #c8dfc0;
-}
-
-.app-light #progress-bar > .bar--complete {
-    color: #5a8a3a;
-}
-
-.app-light #transfer-status {
-    color: #9a8e7e;
-}
-
-/* ── Notification toast ── */
-
-.app-light #notification-toast {
-    background: #ddd8c8;
-    color: #5c5143;
-    border: solid #bfb9a8;
-}
-
-.app-light #notification-toast.success {
-    background: #c0d8b8;
-    border: solid #a0c098;
-    color: #2a5220;
-}
-
-.app-light #notification-toast.error {
-    background: #dfc8c8;
-    border: solid #c8a8a8;
-    color: #7a2020;
-}
-
-/* ── File picker (textual-fspicker overrides — Everforest Light) ── */
-
-.app-light FileSystemPickerScreen {
+    background: #301c24;
+    border: solid #5d3240;
+    color: #e38996;
+}
+
+HelpScreen,
+UploadConfirmScreen,
+TransferProgressScreen,
+FileSystemPickerScreen {
     align: center middle;
-    background: rgba(100, 90, 75, 0.55);
+    background: rgba(3, 7, 5, 0.84);
 }
 
-.app-light FileSystemPickerScreen Dialog {
-    background: #ede8d9;
-    border: solid #bfb9a8;
-    border-title-color: #5c5143;
-    border-title-background: #ede8d9;
-    border-subtitle-color: #7a2020;
-    border-subtitle-background: #dfc8c8;
-}
-
-.app-light FileSystemPickerScreen OptionList,
-.app-light FileSystemPickerScreen OptionList:focus {
-    background: #ede8d9;
-    scrollbar-color: #a8a090;
-    scrollbar-color-hover: #5a8a3a;
-    scrollbar-color-active: #5a8a3a;
-}
-
-.app-light FileSystemPickerScreen OptionList > .option-list--option-highlighted {
-    background: #c8dfc0;
-    color: #3a3028;
-    text-style: bold;
-}
-
-.app-light FileSystemPickerScreen OptionList > .option-list--option-hover {
-    background: #ddd8c8;
-    color: #5c5143;
-}
-
-.app-light FileSystemPickerScreen Button {
-    background: #d8d1bf;
-    color: #5c5143;
-    text-style: bold;
-    border-top: tall #e4dece;
-    border-bottom: tall #bfb9a8;
-}
-
-.app-light FileSystemPickerScreen Button:hover {
-    background: #c8dfc0;
-    color: #3a5c2a;
-    border-top: tall #d8f0d0;
-}
-
-.app-light FileSystemPickerScreen Button:focus {
-    background: #c8dfc0;
-    color: #3a5c2a;
-}
-
-.app-light FileSystemPickerScreen DriveNavigation,
-.app-light FileSystemPickerScreen DriveNavigation:focus {
+FileSystemPickerScreen Dialog {
+    background: #08130f;
     border: blank;
-    border-right: solid #bfb9a8;
-    background: #ede8d9;
+    border-title-color: #e9f4ea;
+    border-title-background: #08130f;
+    border-subtitle-color: #e38996;
+    border-subtitle-background: #301c24;
 }
 
-.app-light FileSystemPickerScreen DriveNavigation > .option-list--option-highlighted {
-    background: #c8dfc0;
-    color: #3a3028;
+FileSystemPickerScreen OptionList,
+FileSystemPickerScreen OptionList:focus {
+    background: #0b1814;
+    scrollbar-size: 1 1;
+    scrollbar-color: #183129;
+    scrollbar-color-hover: #79d98f;
+    scrollbar-color-active: #79d98f;
+}
+
+FileSystemPickerScreen OptionList > .option-list--option-highlighted {
+    background: #173528;
+    color: #e9f4ea;
     text-style: bold;
 }
 
-.app-light FileSystemPickerScreen CurrentDirectory {
-    color: #4a6878;
-    border-bottom: solid #bfb9a8;
-    background: #e4dece;
+FileSystemPickerScreen OptionList > .option-list--option-hover {
+    background: #13261f;
+    color: #dce8df;
 }
 
-.app-light FileSystemPickerScreen DirectoryNavigation > .directory-navigation--hidden {
-    color: #aea090;
+FileSystemPickerScreen Button {
+    background: #13261f;
+    color: #9db3a8;
+    text-style: bold;
+    border-top: tall #27443a;
+    border-bottom: tall #07100d;
+}
+
+FileSystemPickerScreen Button:hover {
+    background: #173528;
+    color: #79d98f;
+    border-top: tall #4d7b62;
+}
+
+FileSystemPickerScreen Button:focus {
+    background: #173528;
+    color: #e9f4ea;
+    border-top: tall #4d7b62;
+}
+
+FileSystemPickerScreen DriveNavigation,
+FileSystemPickerScreen DriveNavigation:focus {
+    border: blank;
+    border-right: solid #1f3a32;
+    background: #0b1814;
+}
+
+FileSystemPickerScreen DriveNavigation > .option-list--option-highlighted {
+    background: #173528;
+    color: #e9f4ea;
+    text-style: bold;
+}
+
+FileSystemPickerScreen CurrentDirectory {
+    color: #7d9a8d;
+    border-bottom: solid #1f3a32;
+    background: #12211c;
+}
+
+FileSystemPickerScreen DirectoryNavigation > .directory-navigation--hidden {
+    color: #54665e;
     text-style: italic;
 }
 
-.app-light FileSystemPickerScreen Input {
-    background: #f3ede3;
-    color: #5c5143;
-    border: tall #d8d1bf;
+FileSystemPickerScreen Input {
+    background: #0b1814;
+    color: #e9f4ea;
+    border: tall #1f3a32;
 }
 
-.app-light FileSystemPickerScreen Input:focus {
-    background: #faf6f0;
-    border: tall #bfb9a8;
+FileSystemPickerScreen Input:focus {
+    background: #13261f;
+    border: tall #27443a;
 }

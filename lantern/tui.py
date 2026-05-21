@@ -282,6 +282,8 @@ class LanternApp(App):
     selected_peer: reactive[dict | None] = reactive(None)
     dark_theme: reactive[bool] = reactive(True)
     remote_files: reactive[list[dict]] = reactive([])
+    active_transfers: reactive[int] = reactive(0)
+    search_query: reactive[str] = reactive("")
 
     def __init__(
         self,
@@ -298,55 +300,92 @@ class LanternApp(App):
     def compose(self) -> ComposeResult:
         yield Header()
 
-        with Horizontal(id="main-container"):
-            with Vertical(id="sidebar"):
-                yield Label("PEERS", id="sidebar-title")
-                yield Static("Looking for nearby Lantern apps...", id="peers-hint")
-                with Container(id="peer-list-container"):
-                    yield ListView(id="peer-list")
-                yield Label("MY FILES", id="my-files-title")
-                yield DataTable(id="my-files-table")
+        with Vertical(id="shell"):
+            with Container(id="masthead"):
+                with Horizontal(id="masthead-row"):
+                    yield Static("LANTERN", id="app-title")
+                    yield Static("P2P FILE SHARING", id="app-subtitle")
+                    yield Static("Peers 0", id="status-peers", classes="status-chip")
+                    yield Static("Files 0", id="status-files", classes="status-chip")
+                    yield Static("Transfers 0", id="status-transfers", classes="status-chip")
+                    yield Static(f"Port {self.tcp_port}", id="status-port", classes="status-chip")
+                    yield Static("Online", id="status-online", classes="status-chip")
+                    yield Static("--:--:--", id="status-clock", classes="status-chip")
 
-            with Vertical(id="main-panel"):
-                with Container(id="files-header"):
-                    yield Label(
-                        "Waiting for another Lantern app",
-                        id="files-header-text",
-                    )
-                yield Static(
-                    "[bold #5dba6e]Start here[/]\n\n"
-                    "Run Lantern on another computer connected to this network.\n"
-                    "When it appears in Peers, select it to browse files.\n\n"
-                    f"Files you receive are saved in:\n[#7090a0]{markup_escape(SHARED_DIR)}[/]\n\n"
-                    "Trusted networks only: Lantern does not encrypt or authenticate peers.",
-                    id="empty-state",
+            with Horizontal(id="dashboard"):
+                with Vertical(id="sidebar"):
+                    with Container(id="peer-card"):
+                        yield Label("PEERS", id="sidebar-title")
+                        yield Static("Looking for nearby Lantern apps...", id="peers-hint")
+                        with Container(id="peer-list-container"):
+                            yield ListView(id="peer-list")
+
+                    with Container(id="share-card"):
+                        yield Label("MY SHARES", id="my-files-title")
+                        yield Static("0 files • 0 B", id="my-files-summary")
+                        yield DataTable(id="my-files-table")
+
+                with Vertical(id="workspace"):
+                    with Container(id="main-panel"):
+                        with Horizontal(id="files-header"):
+                            with Vertical(id="files-header-copy"):
+                                yield Label(
+                                    "Waiting for another Lantern app",
+                                    id="files-header-text",
+                                )
+                                yield Static(
+                                    "Select a peer to browse its shared files.",
+                                    id="files-summary",
+                                )
+                            yield Input(
+                                placeholder="Search files...",
+                                id="file-search",
+                            )
+                        yield Static(
+                            "[bold #5dba6e]Start here[/]\n\n"
+                            "Run Lantern on another computer connected to this network.\n"
+                            "When it appears in Peers, select it to browse files.\n\n"
+                            f"Files you receive are saved in:\n[#7090a0]{markup_escape(SHARED_DIR)}[/]\n\n"
+                            "Trusted networks only: Lantern does not encrypt or authenticate peers.",
+                            id="empty-state",
+                        )
+                        yield Static("No search results yet.", id="search-empty-state")
+                        yield DataTable(id="remote-files-table")
+
+                        with Horizontal(id="action-bar"):
+                            yield Button("Send file", id="btn-upload", disabled=True)
+                            yield Button("Get selected", id="btn-download", disabled=True)
+                            yield Button("Refresh list", id="btn-refresh", disabled=True)
+
+                    with Horizontal(id="lower-panels"):
+                        with Container(id="transfer-panel"):
+                            with Horizontal(id="transfer-header"):
+                                yield Label("TRANSFERS", id="transfer-title")
+                                yield Static("Idle", id="transfer-summary")
+                            yield RichLog(id="transfer-log", highlight=True, markup=True)
+
+                        with Container(id="log-panel"):
+                            yield Label("ACTIVITY", id="log-title")
+                            yield RichLog(id="log-view", highlight=True, markup=True)
+
+            with Container(id="command-bar"):
+                yield Input(
+                    placeholder="Optional command line. Press F1 for help.",
+                    id="command-input",
                 )
-                yield DataTable(id="remote-files-table")
-
-                with Horizontal(id="action-bar"):
-                    yield Button("Send file", id="btn-upload", disabled=True)
-                    yield Button("Get selected", id="btn-download", disabled=True)
-                    yield Button("Refresh list", id="btn-refresh", disabled=True)
-
-        with Vertical(id="log-panel"):
-            yield Label("ACTIVITY", id="log-title")
-            yield RichLog(id="log-view", highlight=True, markup=True)
-
-        with Horizontal(id="command-bar"):
-            yield Input(
-                placeholder="Optional command line. Press F1 for help.",
-                id="command-input",
-            )
 
         yield Footer()
 
     def on_mount(self) -> None:
         self._setup_tables()
         self._refresh_my_files()
+        self._update_clock()
+        self._refresh_dashboard()
 
         self.set_interval(3.0, self._poll_peers)
         self.set_interval(10.0, self._refresh_my_files)
         self.set_interval(0.5, self._poll_upload_requests)
+        self.set_interval(1.0, self._update_clock)
 
         self._log(
             f"Lantern started  [bold #5dba6e]peer_id={PEER_ID}[/]  tcp_port={self.tcp_port}"
@@ -368,6 +407,112 @@ class LanternApp(App):
         remote_table.cursor_type = "row"
         remote_table.zebra_stripes = True
         remote_table.display = False
+
+    def _update_clock(self) -> None:
+        try:
+            self.query_one("#status-clock", Static).update(
+                datetime.now().strftime("%H:%M:%S")
+            )
+        except Exception:
+            pass
+
+    def _local_file_totals(self) -> tuple[int, int]:
+        count = 0
+        total_size = 0
+        os.makedirs(SHARED_DIR, exist_ok=True)
+        for name in os.listdir(SHARED_DIR):
+            filepath = os.path.join(SHARED_DIR, name)
+            if os.path.isfile(filepath):
+                count += 1
+                total_size += os.path.getsize(filepath)
+        return count, total_size
+
+    def _refresh_dashboard(self) -> None:
+        peer_count = len(self.discovery.get_peers())
+        local_count, local_size = self._local_file_totals()
+        remote_count = len(self.remote_files)
+
+        try:
+            self.query_one("#status-peers", Static).update(f"Peers {peer_count}")
+            self.query_one("#status-files", Static).update(
+                f"Files {local_count + remote_count}"
+            )
+            self.query_one("#status-transfers", Static).update(
+                f"Transfers {self.active_transfers}"
+            )
+            self.query_one("#status-port", Static).update(f"Port {self.tcp_port}")
+            self.query_one("#status-online", Static).update("Online")
+            self.query_one("#my-files-summary", Static).update(
+                f"{local_count} files • {format_size(local_size)}"
+            )
+            if self.selected_peer:
+                self.query_one("#transfer-summary", Static).update(
+                    f"{self.active_transfers} active"
+                )
+            else:
+                self.query_one("#transfer-summary", Static).update("Idle")
+        except Exception:
+            pass
+
+    def _adjust_active_transfers(self, delta: int) -> None:
+        self.active_transfers = max(0, self.active_transfers + delta)
+        self._refresh_dashboard()
+
+    def _log_transfer(self, message: str) -> None:
+        transfer_log = self.query_one("#transfer-log", RichLog)
+        ts = datetime.now().strftime("%H:%M:%S")
+        transfer_log.write(f"[#506050]{ts}[/]  {message}")
+
+    def _render_remote_files(self) -> None:
+        table = self.query_one("#remote-files-table", DataTable)
+        search_label = self.query_one("#search-empty-state", Static)
+        empty_state = self.query_one("#empty-state", Static)
+        summary = self.query_one("#files-summary", Static)
+
+        if not self.selected_peer:
+            table.clear()
+            table.display = False
+            search_label.display = False
+            empty_state.display = True
+            summary.update("Select a peer to browse its shared files.")
+            return
+
+        table.display = True
+        filtered = self.remote_files
+        query = self.search_query.strip().lower()
+        if query:
+            filtered = [f for f in self.remote_files if query in f["name"].lower()]
+
+        table.clear()
+        for f in filtered:
+            table.add_row(f["name"], format_size(f["size"]))
+
+        empty_state.display = False
+        search_label.display = bool(query and not filtered)
+
+        total_size = sum(f["size"] for f in self.remote_files)
+        if query:
+            summary.update(
+                f"Showing {len(filtered)} of {len(self.remote_files)} files"
+            )
+            search_label.update(
+                f"No matches for [bold #5dba6e]{markup_escape(self.search_query)}[/]."
+            )
+        else:
+            summary.update(f"{len(self.remote_files)} files • {format_size(total_size)}")
+
+        self.query_one("#status-files", Static).update(
+            f"Files {len(self.remote_files) + self._local_file_totals()[0]}"
+        )
+        self.query_one("#status-transfers", Static).update(
+            f"Transfers {self.active_transfers}"
+        )
+
+    def _set_search_query(self, value: str) -> None:
+        if value == self.search_query:
+            return
+        self.search_query = value
+        self._render_remote_files()
 
     def _log(self, message: str) -> None:
         log_view = self.query_one("#log-view", RichLog)
@@ -424,14 +569,19 @@ class LanternApp(App):
         if peer:
             self.selected_peer = peer
             self._set_peer_actions_enabled(True)
+            self.search_query = ""
+            try:
+                self.query_one("#file-search", Input).value = ""
+            except Exception:
+                pass
             header_label = self.query_one("#files-header-text", Label)
             header_label.update(
                 f"FILES ON: [bold #5dba6e]{markup_escape(peer['hostname'])}[/]  "
                 f"([#7090a0]{markup_escape(peer['ip'])}:{peer['tcp_port']}[/])"
             )
-            self.query_one("#empty-state", Static).display = False
-            self.query_one("#remote-files-table", DataTable).display = True
             self._refresh_remote_files()
+            self._render_remote_files()
+            self._refresh_dashboard()
 
     def _set_peer_actions_enabled(self, enabled: bool) -> None:
         for button_id in ("#btn-upload", "#btn-download", "#btn-refresh"):
@@ -462,6 +612,10 @@ class LanternApp(App):
                 f"[bold]{markup_escape(request.filename)}[/] from "
                 f"[#5dba6e]{markup_escape(request.sender_ip)}[/]"
             )
+            self._log_transfer(
+                f"[bold #c4944a]Incoming[/] {markup_escape(request.filename)}"
+            )
+            self._adjust_active_transfers(1)
 
             if request.filesize > 1024 * 1024:
                 progress_screen = TransferProgressScreen(
@@ -481,6 +635,10 @@ class LanternApp(App):
                             f"Complete: {format_size(request.filesize)}",
                         )
                         self.call_from_thread(
+                            self._log_transfer,
+                            f"[#5dba6e]Received[/] {markup_escape(request.filename)}",
+                        )
+                        self.call_from_thread(
                             self.show_notification,
                             f"Received {request.filename}",
                             "success",
@@ -489,6 +647,7 @@ class LanternApp(App):
                         self.call_from_thread(
                             progress_screen.mark_complete, False, "Transfer incomplete"
                         )
+                    self.call_from_thread(self._adjust_active_transfers, -1)
                     self.call_from_thread(self._refresh_my_files)
 
                 threading.Thread(target=_watch_completion, daemon=True).start()
@@ -497,6 +656,10 @@ class LanternApp(App):
                 def _notify_done() -> None:
                     request.transfer_done_event.wait()
                     if request.transfer_success:
+                        self.call_from_thread(
+                            self._log_transfer,
+                            f"[#5dba6e]Received[/] {markup_escape(request.filename)}",
+                        )
                         self.call_from_thread(
                             self.show_notification,
                             f"Received {request.filename}",
@@ -507,6 +670,7 @@ class LanternApp(App):
                             f"[#5dba6e]Received[/] [bold]{markup_escape(request.filename)}[/] "
                             f"({format_size(request.filesize)})",
                         )
+                    self.call_from_thread(self._adjust_active_transfers, -1)
                     self.call_from_thread(self._refresh_my_files)
 
                 threading.Thread(target=_notify_done, daemon=True).start()
@@ -528,6 +692,7 @@ class LanternApp(App):
             if os.path.isfile(filepath):
                 size = os.path.getsize(filepath)
                 table.add_row(name, format_size(size))
+        self._refresh_dashboard()
 
     @work(thread=True)
     def _refresh_remote_files(self) -> None:
@@ -549,10 +714,10 @@ class LanternApp(App):
         self.remote_files = files
         table = self.query_one("#remote-files-table", DataTable)
         table.clear()
-        for f in files:
-            table.add_row(f["name"], format_size(f["size"]))
+        self._render_remote_files()
         if not files and self.selected_peer:
             self._log("Selected peer is online, but it has no shared files yet.")
+        self._refresh_dashboard()
 
     def action_show_help(self) -> None:
         self.push_screen(HelpScreen(dark=self.dark_theme))
@@ -581,6 +746,7 @@ class LanternApp(App):
             )
         else:
             self._log("Select a peer first. Local files were refreshed.")
+        self._refresh_dashboard()
 
     def action_upload_file(self) -> None:
         if not self.selected_peer:
@@ -609,6 +775,11 @@ class LanternApp(App):
             f"Requesting upload of [bold]{markup_escape(os.path.basename(filepath))}[/] to "
             f"[#5dba6e]{markup_escape(peer['hostname'])}[/]...",
         )
+        self.app.call_from_thread(
+            self._log_transfer,
+            f"[bold #c4944a]Uploading[/] {markup_escape(os.path.basename(filepath))}",
+        )
+        self.app.call_from_thread(self._adjust_active_transfers, 1)
 
         progress_screen = None
         cancel_event = threading.Event()
@@ -668,6 +839,8 @@ class LanternApp(App):
                 f"Upload failed: {e}",
                 "error",
             )
+        finally:
+            self.app.call_from_thread(self._adjust_active_transfers, -1)
 
     def action_download_file(self) -> None:
         if not self.selected_peer:
@@ -706,6 +879,11 @@ class LanternApp(App):
             self._log,
             f"Downloading [bold]{markup_escape(filename)}[/] from [#5dba6e]{markup_escape(peer['hostname'])}[/]...",
         )
+        self.app.call_from_thread(
+            self._log_transfer,
+            f"[bold #5dba6e]Downloading[/] {markup_escape(filename)}",
+        )
+        self.app.call_from_thread(self._adjust_active_transfers, 1)
 
         progress_screen = None
         cancel_event = None
@@ -763,6 +941,8 @@ class LanternApp(App):
                 f"Download failed: {e}",
                 "error",
             )
+        finally:
+            self.app.call_from_thread(self._adjust_active_transfers, -1)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         btn_id = event.button.id
@@ -773,7 +953,15 @@ class LanternApp(App):
         elif btn_id == "btn-refresh":
             self.action_refresh_files()
 
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "file-search":
+            self._set_search_query(event.value)
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "file-search":
+            self._set_search_query(event.value.strip())
+            return
+
         if event.input.id != "command-input":
             return
 
